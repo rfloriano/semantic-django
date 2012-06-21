@@ -1,0 +1,1 @@
+from semantic.rdf.backends.virtuoso import Virtuoso

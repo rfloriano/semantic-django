@@ -1,0 +1,2 @@
+class SemanticModel(object):
+    pass

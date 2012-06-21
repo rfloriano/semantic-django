@@ -1,0 +1,2 @@
+class UriField(object):
+    """UriField"""

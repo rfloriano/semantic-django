@@ -1,9 +1,14 @@
+#-*- coding:utf-8 -*-
+import sys
+import codecs
 from optparse import make_option
 
 from django.core.management.base import BaseCommand, CommandError
 
-from semantic.virtuoso import Virtuoso
+from semantic.rdf import Virtuoso
 
+# Hack to encode stdout
+sys.stdout = codecs.getwriter('utf8')(sys.stdout)
 
 class Command(BaseCommand):
     help = "Introspects the database tables in the given database and outputs a Django model module."
@@ -15,7 +20,7 @@ class Command(BaseCommand):
 
     requires_model_validation = False
 
-    db_module = 'g1_libs.semantic'
+    rdf_module = 'semantic.rdf'
     virtuoso = Virtuoso()
     graph = ''
 
@@ -54,7 +59,7 @@ class Command(BaseCommand):
             }
 
         for line in self.make_model(class_data):
-            self.stdout.write("%s\n" % line)
+            self.stdout.write("%s\n".encode('utf-8') % line)
 
     def get_or_blank(self, data, key):
         try:
@@ -117,13 +122,14 @@ class Command(BaseCommand):
         return value and value[0].upper() + value[1:]
 
     def make_model(self, data):
+        yield "#-*- coding:utf-8 -*-"
         yield "# This is an auto-generated Semantic Globo model module."
         yield "# You'll have to do the following manually to clean this up:"
         yield "#     * Rearrange models' order"
         yield "# Feel free to rename the models, but don't rename semantic_graph values or field names."
         yield "#"
         yield ''
-        yield 'from %s import models' % self.db_module
+        yield 'from %s import models' % self.rdf_module
         yield ''
         yield ''
         for graph_uri, data in data.items():
