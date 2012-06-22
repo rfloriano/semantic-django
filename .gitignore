@@ -1,0 +1,4 @@
+*.pyc
+*.bkp
+*.sw*
+.DS_Store
