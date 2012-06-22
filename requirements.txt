@@ -1,0 +1,3 @@
+nose
+django_nose
+mocker
