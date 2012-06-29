@@ -1,5 +1,3 @@
-import os
-
 from django.conf import settings
 from django.db.utils import ConnectionDoesNotExist
 from django.utils.importlib import import_module
@@ -18,7 +16,6 @@ class IntegrityError(DatabaseError):
 
 
 def load_backend(backend_name):
-    import ipdb; ipdb.set_trace()
     try:
         module = import_module('.base', '%s' % backend_name)
         return module

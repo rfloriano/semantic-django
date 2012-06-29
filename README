@@ -1,0 +1,5 @@
+Semantic-Django is a project to create an OSM (object semantic mapper).
+
+Installation requirements are on file requirements.txt and can be installed using: pip install -r requirements.txt
+
+Currently being developed a Django backend compatible with Virtuoso.
