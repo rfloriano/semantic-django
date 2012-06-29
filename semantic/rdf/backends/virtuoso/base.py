@@ -8,9 +8,11 @@ from django.db.backends.sqlite3.introspection import DatabaseIntrospection
 from SPARQLWrapper import SPARQLWrapper as Database
 from SPARQLWrapper import JSON
 
+from semantic.rdf.backends import BaseSemanticDatabaseOperations
+
 
 class DatabaseFeatures(BaseDatabaseFeatures):
-    # SQLite cannot handle us only partially reading from a cursor's result set
+    # SPARQLite cannot handle us only partially reading from a cursor's result set
     # and then writing the same rows to the database in another cursor. This
     # setting ensures we always read result sets fully into memory all in one
     # go.
@@ -23,7 +25,7 @@ class DatabaseFeatures(BaseDatabaseFeatures):
     def _supports_stddev(self):
         """Confirm support for STDDEV and related stats functions
 
-        SQLite supports STDDEV as an extension package; so
+        SPARQLite supports STDDEV as an extension package; so
         connection.ops.check_aggregate_support() can't unilaterally
         rule out support for STDDEV. We need to manually check
         whether the call works.
@@ -39,32 +41,32 @@ class DatabaseFeatures(BaseDatabaseFeatures):
         return has_support
 
 
-class DatabaseOperations(BaseDatabaseOperations):
-    def date_extract_sql(self, lookup_type, field_name):
-        # sqlite doesn't support extract, so we fake it with the user-defined
+class DatabaseOperations(BaseSemanticDatabaseOperations):
+    def date_extract_sparql(self, lookup_type, field_name):
+        # sparqlite doesn't support extract, so we fake it with the user-defined
         # function django_extract that's registered in connect(). Note that
         # single quotes are used because this is a string (and could otherwise
         # cause a collision with a field name).
         return "django_extract('%s', %s)" % (lookup_type.lower(), field_name)
 
-    def date_interval_sql(self, sql, connector, timedelta):
-        # It would be more straightforward if we could use the sqlite strftime
+    def date_interval_sparql(self, sparql, connector, timedelta):
+        # It would be more straightforward if we could use the sparqlite strftime
         # function, but it does not allow for keeping six digits of fractional
         # second information, nor does it allow for formatting date and datetime
         # values differently. So instead we register our own function that
         # formats the datetime combined with the delta in a manner suitable
         # for comparisons.
-        return  u'django_format_dtdelta(%s, "%s", "%d", "%d", "%d")' % (sql,
+        return  u'django_format_dtdelta(%s, "%s", "%d", "%d", "%d")' % (sparql,
             connector, timedelta.days, timedelta.seconds, timedelta.microseconds)
 
-    def date_trunc_sql(self, lookup_type, field_name):
-        # sqlite doesn't support DATE_TRUNC, so we fake it with a user-defined
+    def date_trunc_sparql(self, lookup_type, field_name):
+        # sparqlite doesn't support DATE_TRUNC, so we fake it with a user-defined
         # function django_date_trunc that's registered in connect(). Note that
         # single quotes are used because this is a string (and could otherwise
         # cause a collision with a field name).
         return "django_date_trunc('%s', %s)" % (lookup_type.lower(), field_name)
 
-    def drop_foreignkey_sql(self):
+    def drop_foreignkey_sparql(self):
         return ""
 
     def pk_default_value(self):
@@ -78,18 +80,18 @@ class DatabaseOperations(BaseDatabaseOperations):
     def no_limit_value(self):
         return -1
 
-    def sql_flush(self, style, tables, sequences):
-        # NB: The generated SQL below is specific to SQLite
-        # Note: The DELETE FROM... SQL generated below works for SQLite databases
+    def sparql_flush(self, style, tables, sequences):
+        # NB: The generated SPARQL below is specific to SPARQLite
+        # Note: The DELETE FROM... SPARQL generated below works for SPARQLite databases
         # because constraints don't exist
-        sql = ['%s %s %s;' % \
-                (style.SQL_KEYWORD('DELETE'),
-                 style.SQL_KEYWORD('FROM'),
-                 style.SQL_FIELD(self.quote_name(table))
+        sparql = ['%s %s %s;' % \
+                (style.SPARQL_KEYWORD('DELETE'),
+                 style.SPARQL_KEYWORD('FROM'),
+                 style.SPARQL_FIELD(self.quote_name(table))
                  ) for table in tables]
         # Note: No requirement for reset of auto-incremented indices (cf. other
-        # sql_flush() implementations). Just return SQL at this point
-        return sql
+        # sparql_flush() implementations). Just return SPARQL at this point
+        return sparql
 
     def year_lookup_bounds(self, value):
         first = '%s-01-01'
@@ -97,7 +99,7 @@ class DatabaseOperations(BaseDatabaseOperations):
         return [first % value, second % value]
 
     def convert_values(self, value, field):
-        """SQLite returns floats when it should be returning decimals,
+        """SPARQLite returns floats when it should be returning decimals,
         and gets dates and datetimes wrong.
         For consistency with other backends, coerce when required.
         """
@@ -118,10 +120,10 @@ class DatabaseOperations(BaseDatabaseOperations):
 
 
 class DatabaseWrapper(BaseDatabaseWrapper):
-    vendor = 'sqlite'
-    # SQLite requires LIKE statements to include an ESCAPE clause if the value
+    vendor = 'sparqlite'
+    # SPARQLite requires LIKE statements to include an ESCAPE clause if the value
     # being escaped has a percent or underscore in it.
-    # See http://www.sqlite.org/lang_expr.html for an explanation.
+    # See http://www.sparqlite.org/lang_expr.html for an explanation.
     operators = {
         'exact': '= %s',
         'iexact': "LIKE %s ESCAPE '\\'",
@@ -170,6 +172,14 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
             connection_created.send(sender=self.__class__, connection=self)
         return self.connection
+
+    def cursor(self):
+        self._cursor()
+        return self
+
+    def execute(self, sparql, params):
+        self.connection.setQuery(sparql)
+        return self.connection.query().convert()
 
     def close(self):
         # If database is in memory, closing the connection destroys the

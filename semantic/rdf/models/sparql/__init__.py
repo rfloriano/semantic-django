@@ -1,6 +1,7 @@
 from query import *
-# from subqueries import *
-# from where import AND, OR
-# from datastructures import EmptyResultSet
+from subqueries import *
+from where import AND, OR
+from datastructures import EmptyResultSet
 
-__all__ = ['Query']  # , 'AND', 'OR', 'EmptyResultSet']
+__all__ = ['SemanticQuery', 'AND', 'OR', 'EmptyResultSet']
+
