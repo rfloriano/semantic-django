@@ -55,7 +55,7 @@ select * from <http://semantica.globo.com/> where {
     base:faz_parte_do_canal ?faz_parte_do_canal ;
     rdfs:label ?label
 }
-""", ''
+""", []
 
     # def as_sparql(self, with_limits=True, with_col_aliases=False):
     #     """
@@ -745,7 +745,6 @@ select * from <http://semantica.globo.com/> where {
             else:
                 return
 
-        import ipdb; ipdb.set_trace()
         cursor = self.connection.cursor()
         cursor.execute(sparql, params)
 
@@ -761,8 +760,11 @@ select * from <http://semantica.globo.com/> where {
             result = order_modified_iter(cursor, len(self.query.ordering_aliases),
                     self.connection.features.empty_fetchmany_value)
         else:
-            result = iter((lambda: cursor.fetchmany(GET_ITERATOR_CHUNK_SIZE)),
-                    self.connection.features.empty_fetchmany_value)
+            # result = iter(
+            #     (lambda: cursor.fetchmany(GET_ITERATOR_CHUNK_SIZE)),
+            #         self.connection.features.empty_fetchmany_value
+            # )
+            result = iter(cursor.fetchmany(GET_ITERATOR_CHUNK_SIZE))
         if not self.connection.features.can_use_chunked_reads:
             # If we are using non-chunked reads, we return the same data
             # structure as normally, but ensure it is all read into memory

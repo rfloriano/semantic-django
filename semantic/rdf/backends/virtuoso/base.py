@@ -9,6 +9,7 @@ from SPARQLWrapper import SPARQLWrapper as Database
 from SPARQLWrapper import JSON
 
 from semantic.rdf.backends import BaseSemanticDatabaseOperations
+from semantic.rdf.backends.virtuoso.dbapi import Cursor
 
 
 class DatabaseFeatures(BaseDatabaseFeatures):
@@ -171,15 +172,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             self.connection.setReturnFormat(JSON)
 
             connection_created.send(sender=self.__class__, connection=self)
-        return self.connection
-
-    def cursor(self):
-        self._cursor()
-        return self
-
-    def execute(self, sparql, params):
-        self.connection.setQuery(sparql)
-        return self.connection.query().convert()
+        return Cursor(self.connection)
 
     def close(self):
         # If database is in memory, closing the connection destroys the
