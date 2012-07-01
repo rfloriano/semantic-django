@@ -10,10 +10,10 @@ from semantic.rdf.models.manager import SemanticManager
 
 
 class BasePrograma(models.SemanticModel):
-    foto_perfil = models.UriField()
-    id_do_programa_na_webmedia = models.UriField()
-    faz_parte_do_canal = models.UriField()
-    tem_edicao_do_programa = models.UriField()
+    foto_perfil = models.LiteralField(max_length=200)
+    id_do_programa_na_webmedia = models.IntegerField()
+    faz_parte_do_canal = models.URIField()
+    tem_edicao_do_programa = models.LiteralField(max_length=200)
 
     objects = SemanticManager()
 

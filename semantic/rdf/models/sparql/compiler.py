@@ -49,11 +49,13 @@ class SPARQLCompiler(object):
         return """
 prefix base: <http://semantica.globo.com/base/>
 
-select * from <http://semantica.globo.com/> where {
+select ?uri ?id_do_programa_na_webmedia ?faz_parte_do_canal ?foto_perfil from <http://semantica.globo.com/> where {
  ?uri
     base:id_do_programa_na_webmedia ?id_do_programa_na_webmedia ;
-    base:faz_parte_do_canal ?faz_parte_do_canal ;
-    rdfs:label ?label
+    base:faz_parte_do_canal ?faz_parte_do_canal .
+    optional {
+       ?uri base:foto_perfil ?foto_perfil
+    }
 }
 """, []
 
@@ -65,7 +67,6 @@ select * from <http://semantica.globo.com/> where {
     #     If 'with_limits' is False, any limit/offset information is not included
     #     in the query.
     #     """
-    #     import ipdb; ipdb.set_trace()
     #     if with_limits and self.query.low_mark == self.query.high_mark:
     #         return '', ()
 
@@ -132,6 +133,14 @@ select * from <http://semantica.globo.com/> where {
     #             result.append('OFFSET %d' % self.query.low_mark)
 
     #     return ' '.join(result), tuple(params)
+
+    def resolve_columns(self, row, fields=()):
+        index_extra_select = len(self.query.extra_select.keys())
+        row_dict = dict(row[index_extra_select:])
+        values = []
+        for field in fields:
+            values.append(row_dict.get(field.attname, ''))
+        return row[:index_extra_select] + tuple(values)
 
     def as_nested_sparql(self):
         """
@@ -691,36 +700,35 @@ select * from <http://semantica.globo.com/> where {
         resolve_columns = hasattr(self, 'resolve_columns')
         fields = None
         has_aggregate_select = bool(self.query.aggregate_select)
-        for rows in self.execute_sparql(MULTI):
-            for row in rows:
-                if resolve_columns:
-                    if fields is None:
-                        # We only set this up here because
-                        # related_select_fields isn't populated until
-                        # execute_sparql() has been called.
-                        if self.query.select_fields:
-                            fields = self.query.select_fields + self.query.related_select_fields
-                        else:
-                            fields = self.query.model._meta.fields
-                        # If the field was deferred, exclude it from being passed
-                        # into `resolve_columns` because it wasn't selected.
-                        only_load = self.deferred_to_columns()
-                        if only_load:
-                            db_table = self.query.model._meta.db_table
-                            fields = [f for f in fields if db_table in only_load and
-                                      f.column in only_load[db_table]]
-                    row = self.resolve_columns(row, fields)
+        for row in self.execute_sparql(MULTI):
+            if resolve_columns:
+                if fields is None:
+                    # We only set this up here because
+                    # related_select_fields isn't populated until
+                    # execute_sparql() has been called.
+                    if self.query.select_fields:
+                        fields = self.query.select_fields + self.query.related_select_fields
+                    else:
+                        fields = self.query.model._meta.fields
+                    # If the field was deferred, exclude it from being passed
+                    # into `resolve_columns` because it wasn't selected.
+                    only_load = self.deferred_to_columns()
+                    if only_load:
+                        db_table = self.query.model._meta.db_table
+                        fields = [f for f in fields if db_table in only_load and
+                                  f.column in only_load[db_table]]
+                row = self.resolve_columns(row, fields)
 
-                if has_aggregate_select:
-                    aggregate_start = len(self.query.extra_select.keys()) + len(self.query.select)
-                    aggregate_end = aggregate_start + len(self.query.aggregate_select)
-                    row = tuple(row[:aggregate_start]) + tuple([
-                        self.query.resolve_aggregate(value, aggregate, self.connection)
-                        for (alias, aggregate), value
-                        in zip(self.query.aggregate_select.items(), row[aggregate_start:aggregate_end])
-                    ]) + tuple(row[aggregate_end:])
+            if has_aggregate_select:
+                aggregate_start = len(self.query.extra_select.keys()) + len(self.query.select)
+                aggregate_end = aggregate_start + len(self.query.aggregate_select)
+                row = tuple(row[:aggregate_start]) + tuple([
+                    self.query.resolve_aggregate(value, aggregate, self.connection)
+                    for (alias, aggregate), value
+                    in zip(self.query.aggregate_select.items(), row[aggregate_start:aggregate_end])
+                ]) + tuple(row[aggregate_end:])
 
-                yield row
+            yield row
 
     def execute_sparql(self, result_type=MULTI):
         """

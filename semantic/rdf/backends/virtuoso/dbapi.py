@@ -1,13 +1,10 @@
 #!/usr/bin/env python
-# vi:si:et:sw=4:sts=4:ts=4
 #
 # implements Python DBAPI 2.0
 # see PEP 249 (http://www.python.org/dev/peps/pep-0249/)
 import base64
 import decimal
 
-
-RUNS = 0
 
 class Error(Exception):
     pass

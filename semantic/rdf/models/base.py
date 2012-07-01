@@ -246,6 +246,7 @@
 
 from django.db.models.base import ModelBase, Model
 
+from semantic.rdf.models.fields import AutoSemanticField
 from semantic.rdf.models.manager import SemanticManager
 
 
@@ -263,7 +264,11 @@ class SemanticModelBase(ModelBase):
 
 class SemanticModel(Model):
     # __metaclass__ = SemanticModelBase
+    uri = AutoSemanticField()
     objects = SemanticManager()
+
+    class Meta:
+        abstract = True
 
     # def __init__(self, *args, **kwargs):
     #     # Set up the storage for instance state
