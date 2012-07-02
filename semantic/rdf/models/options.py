@@ -1,22 +1,23 @@
 import re
 
 from django.conf import settings
-from django.db.models.options import get_verbose_name, DEFAULT_NAMES
 from django.utils.translation import string_concat
+from django.db.models.options import Options, DEFAULT_NAMES, get_verbose_name
+
+DEFAULT_NAMES = list(DEFAULT_NAMES)
+
+SEMANTIC_DEFAULT_NAMES = tuple(
+    DEFAULT_NAMES + [
+        'graph'
+    ])
 
 
-class Options(object):
+class SemanticOptions(Options):
     def __init__(self, meta, app_label=None):
-        self.object_name, self.app_label = None, app_label
-        self.proxy = False
-        self.local_fields, self.local_many_to_many = [], []
-        self.virtual_fields = []
-        self.meta = meta
+        super(SemanticOptions, self).__init__(meta, app_label)
+        self.graph = ''
 
     def contribute_to_class(self, cls, name):
-        from django.db import connection
-        from django.db.backends.util import truncate_name
-
         cls._meta = self
         self.installed = re.sub('\.models$', '', cls.__module__) in settings.INSTALLED_APPS
         # First, construct the default values for these options.
@@ -33,19 +34,11 @@ class Options(object):
                 # over it, so we loop over the *original* dictionary instead.
                 if name.startswith('_'):
                     del meta_attrs[name]
-            for attr_name in DEFAULT_NAMES:
+            for attr_name in SEMANTIC_DEFAULT_NAMES:
                 if attr_name in meta_attrs:
                     setattr(self, attr_name, meta_attrs.pop(attr_name))
                 elif hasattr(self.meta, attr_name):
                     setattr(self, attr_name, getattr(self.meta, attr_name))
-
-            # unique_together can be either a tuple of tuples, or a single
-            # tuple of two strings. Normalize it to a tuple of tuples, so that
-            # calling code can uniformly expect that.
-            ut = meta_attrs.pop('unique_together', self.unique_together)
-            if ut and not isinstance(ut[0], (tuple, list)):
-                ut = (ut,)
-            self.unique_together = ut
 
             # verbose_name_plural is a special case because it uses a 's'
             # by default.
@@ -58,8 +51,3 @@ class Options(object):
         else:
             self.verbose_name_plural = string_concat(self.verbose_name, 's')
         del self.meta
-
-        # If the db_table wasn't provided, use the app_label + module_name.
-        if not self.db_table:
-            self.db_table = "%s_%s" % (self.app_label, self.module_name)
-            self.db_table = truncate_name(self.db_table, connection.ops.max_name_length())

@@ -6,7 +6,6 @@
 #
 
 from semantic.rdf import models
-from semantic.rdf.models.manager import SemanticManager
 
 
 class BasePrograma(models.SemanticModel):
@@ -15,7 +14,5 @@ class BasePrograma(models.SemanticModel):
     faz_parte_do_canal = models.URIField()
     tem_edicao_do_programa = models.LiteralField(max_length=200)
 
-    objects = SemanticManager()
-
     class Meta:
-        db_table = u'http://semantica.globo.com/base/Programa'
+        graph = u'http://semantica.globo.com/base/Programa'
