@@ -45,94 +45,95 @@ class SPARQLCompiler(object):
         self.quote_cache[name] = r
         return r
 
-    def as_sparql(self, with_limits=True, with_col_aliases=False):
-        return """
-prefix base: <http://semantica.globo.com/base/>
-
-select ?uri ?id_do_programa_na_webmedia ?faz_parte_do_canal ?foto_perfil from <http://semantica.globo.com/> where {
- ?uri
-    base:id_do_programa_na_webmedia ?id_do_programa_na_webmedia ;
-    base:faz_parte_do_canal ?faz_parte_do_canal .
-    optional {
-       ?uri base:foto_perfil ?foto_perfil
-    }
-}
-""", []
-
     # def as_sparql(self, with_limits=True, with_col_aliases=False):
-    #     """
-    #     Creates the SPARQL for this query. Returns the SPARQL string and list of
-    #     parameters.
+#         return """
+# prefix base: <http://semantica.globo.com/base/>
 
-    #     If 'with_limits' is False, any limit/offset information is not included
-    #     in the query.
-    #     """
-    #     if with_limits and self.query.low_mark == self.query.high_mark:
-    #         return '', ()
+# select ?uri ?id_do_programa_na_webmedia ?faz_parte_do_canal ?foto_perfil from <http://semantica.globo.com/> where {
+#  ?uri
+#     base:id_do_programa_na_webmedia ?id_do_programa_na_webmedia ;
+#     base:faz_parte_do_canal ?faz_parte_do_canal .
+#     optional {
+#        ?uri base:foto_perfil ?foto_perfil
+#     }
+# }
+# """, []
 
-    #     self.pre_sparql_setup()
-    #     out_cols = self.get_columns(with_col_aliases)
-    #     ordering, ordering_group_by = self.get_ordering()
+    def as_sparql(self, with_limits=True, with_col_aliases=False):
+        """
+        Creates the SPARQL for this query. Returns the SPARQL string and list of
+        parameters.
 
-    #     # This must come after 'select' and 'ordering' -- see docstring of
-    #     # get_from_clause() for details.
-    #     from_, f_params = self.get_from_clause()
+        If 'with_limits' is False, any limit/offset information is not included
+        in the query.
+        """
+        if with_limits and self.query.low_mark == self.query.high_mark:
+            return '', ()
 
-    #     qn = self.quote_name_unless_alias
+        self.pre_sparql_setup()
+        out_cols = self.get_columns(with_col_aliases)
+        ordering, ordering_group_by = self.get_ordering()
 
-    #     where, w_params = self.query.where.as_sparql(qn=qn, connection=self.connection)
-    #     having, h_params = self.query.having.as_sparql(qn=qn, connection=self.connection)
-    #     params = []
-    #     for val in self.query.extra_select.itervalues():
-    #         params.extend(val[1])
+        # This must come after 'select' and 'ordering' -- see docstring of
+        # get_from_clause() for details.
+        from_, f_params = self.get_from_clause()
 
-    #     result = ['SELECT']
-    #     if self.query.distinct:
-    #         result.append('DISTINCT')
-    #     result.append(', '.join(out_cols + self.query.ordering_aliases))
+        qn = self.quote_name_unless_alias
 
-    #     result.append('FROM')
-    #     result.extend(from_)
-    #     params.extend(f_params)
+        where, w_params = self.get_where_triples()
+        # where, w_params = self.query.where.as_sparql(qn=qn, connection=self.connection)
+        having, h_params = self.query.having.as_sparql(qn=qn, connection=self.connection)
+        params = []
+        for val in self.query.extra_select.itervalues():
+            params.extend(val[1])
 
-    #     if where:
-    #         result.append('WHERE %s' % where)
-    #         params.extend(w_params)
+        result = ['SELECT']
+        if self.query.distinct:
+            result.append('DISTINCT')
+        result.append(' '.join(out_cols + self.query.ordering_aliases))
 
-    #     grouping, gb_params = self.get_grouping()
-    #     if grouping:
-    #         if ordering:
-    #             # If the backend can't group by PK (i.e., any database
-    #             # other than MySPARQL), then any fields mentioned in the
-    #             # ordering clause needs to be in the group by clause.
-    #             if not self.connection.features.allows_group_by_pk:
-    #                 for col, col_params in ordering_group_by:
-    #                     if col not in grouping:
-    #                         grouping.append(str(col))
-    #                         gb_params.extend(col_params)
-    #         else:
-    #             ordering = self.connection.ops.force_no_ordering()
-    #         result.append('GROUP BY %s' % ', '.join(grouping))
-    #         params.extend(gb_params)
+        # result.append('FROM')
+        # result.extend(from_)
+        # params.extend(f_params)
 
-    #     if having:
-    #         result.append('HAVING %s' % having)
-    #         params.extend(h_params)
+        if where:
+            result.append('WHERE { %s }' % where)
+            params.extend(w_params)
 
-    #     if ordering:
-    #         result.append('ORDER BY %s' % ', '.join(ordering))
+        grouping, gb_params = self.get_grouping()
+        if grouping:
+            if ordering:
+                # If the backend can't group by PK (i.e., any database
+                # other than MySPARQL), then any fields mentioned in the
+                # ordering clause needs to be in the group by clause.
+                if not self.connection.features.allows_group_by_pk:
+                    for col, col_params in ordering_group_by:
+                        if col not in grouping:
+                            grouping.append(str(col))
+                            gb_params.extend(col_params)
+            else:
+                ordering = self.connection.ops.force_no_ordering()
+            result.append('GROUP BY %s' % ', '.join(grouping))
+            params.extend(gb_params)
 
-    #     if with_limits:
-    #         if self.query.high_mark is not None:
-    #             result.append('LIMIT %d' % (self.query.high_mark - self.query.low_mark))
-    #         if self.query.low_mark:
-    #             if self.query.high_mark is None:
-    #                 val = self.connection.ops.no_limit_value()
-    #                 if val:
-    #                     result.append('LIMIT %d' % val)
-    #             result.append('OFFSET %d' % self.query.low_mark)
+        if having:
+            result.append('HAVING %s' % having)
+            params.extend(h_params)
 
-    #     return ' '.join(result), tuple(params)
+        if ordering:
+            result.append('ORDER BY %s' % ', '.join(ordering))
+
+        if with_limits:
+            if self.query.high_mark is not None:
+                result.append('LIMIT %d' % (self.query.high_mark - self.query.low_mark))
+            if self.query.low_mark:
+                if self.query.high_mark is None:
+                    val = self.connection.ops.no_limit_value()
+                    if val:
+                        result.append('LIMIT %d' % val)
+                result.append('OFFSET %d' % self.query.low_mark)
+
+        return ' '.join(result), tuple(params)
 
     def resolve_columns(self, row, fields=()):
         index_extra_select = len(self.query.extra_select.keys())
@@ -157,6 +158,34 @@ select ?uri ?id_do_programa_na_webmedia ?faz_parte_do_canal ?foto_perfil from <h
             obj.clear_ordering(True)
         obj.bump_prefix()
         return obj.get_compiler(connection=self.connection).as_sparql()
+
+    def get_where_triples(self):
+        # place this method in where.py
+        tiple_format = '%(graph)s:%(field_name)s ?%(field_name)s'
+        opts = self.query.model._meta
+        uri_field = ''
+        where = []
+        where_optional = []
+        for field, model in opts.get_fields_with_model():
+            if field.primary_key:
+                uri_field = field.name
+            else:
+                if field.blank:
+                    where_optional.append(tiple_format % {
+                        'graph': field.graph,
+                        'field_name': field.name
+                    })
+                else:
+                    where.append(tiple_format % {
+                        'graph': field.graph,
+                        'field_name': field.name
+                    })
+        where_string = '?%s ' % uri_field
+        where_string += '; '.join(where)
+        for optional in where_optional:
+            where_string += ' OPTIONAL { ?%s %s }' % (uri_field, optional)
+
+        return where_string, ''
 
     def get_columns(self, with_aliases=False):
         """
@@ -296,7 +325,7 @@ select ?uri ?id_do_programa_na_webmedia ?faz_parte_do_canal ?foto_perfil from <h
                 col_aliases.add(c_alias)
                 aliases.add(c_alias)
             else:
-                r = '%s.%s' % (qn(alias), qn2(field.column))
+                r = '?%s' % (field.column)
                 result.append(r)
                 aliases.add(r)
                 if with_aliases:

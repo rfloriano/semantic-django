@@ -26,12 +26,13 @@ class ProgrammingError(DatabaseError):
 
 
 class Cursor(object):
-    def __init__(self, connection):
+    def __init__(self, connection, prefixes=''):
         self.arraysize = 100
         self.connection = connection
         self.sparql = None
         self.results = None
         self.pointer = 0
+        self.prefixes = prefixes
 
     def __iter__(self):
         result = self.pointer and self.results[self.pointer:] or self.results
@@ -80,6 +81,7 @@ class Cursor(object):
 
     def execute(self, sparql, params=[]):
         params = self.escape_params(params)
+        sparql = '%s %s' % (' '.join(self.prefixes), sparql)
         self.sparql = sparql
         self.connection.setQuery(sparql)
         self.results = self.connection.query().convert()["results"]["bindings"]

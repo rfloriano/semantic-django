@@ -151,6 +151,11 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.creation = DatabaseCreation(self)
         self.introspection = DatabaseIntrospection(self)
         self.validation = BaseDatabaseValidation(self)
+        if 'PREFIX' in self.settings_dict:
+            self.prefixes = ['prefix %s: %s' % (key, value) \
+                for key, value in self.settings_dict['PREFIX'].items()]
+        else:
+            self.prefixes = ''
 
     def _cursor(self):
         if self.connection is None:
@@ -172,7 +177,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             self.connection.setReturnFormat(JSON)
 
             connection_created.send(sender=self.__class__, connection=self)
-        return Cursor(self.connection)
+        return Cursor(self.connection, self.prefixes)
 
     def close(self):
         # If database is in memory, closing the connection destroys the

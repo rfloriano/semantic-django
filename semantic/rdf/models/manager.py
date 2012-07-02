@@ -1,7 +1,7 @@
 from django.db import models
 
-from semantic.rdf.models.query import SemanticQuerySet
-from semantic.rdf.models.query import SemanticEmptyQuerySet
+from semantic.rdf.models.query import SemanticQuerySet, SemanticEmptyQuerySet, \
+    RawSemanticQuerySet
 
 
 class SemanticManager(models.Manager):
@@ -17,3 +17,6 @@ class SemanticManager(models.Manager):
         to easily customize the behavior of the Manager.
         """
         return SemanticQuerySet(self.model, using=self._db)
+
+    def raw(self, raw_query, params=None, *args, **kwargs):
+        return RawSemanticQuerySet(raw_query=raw_query, model=self.model, params=params, using=self._db, *args, **kwargs)

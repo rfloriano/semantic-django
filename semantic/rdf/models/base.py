@@ -204,7 +204,7 @@ class SemanticModelBase(ModelBase):
 class SemanticModel(Model):
     __metaclass__ = SemanticModelBase
 
-    uri = AutoSemanticField()
+    uri = AutoSemanticField(graph='base')
     objects = SemanticManager()
 
     class Meta:

@@ -22,12 +22,16 @@ DATABASES = {
 
 SEMANTIC_DATABASES = {
     'default': {
-        'ENGINE': 'semantic.rdf.backends.virtuoso',  # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'sparql',                      # Or path to database file if using sqlite3.
-        # 'USER': '',                      # Not used with sqlite3.
-        # 'PASSWORD': '',                  # Not used with sqlite3.
-        'HOST': 'localhost',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '8890',                      # Set to empty string for default. Not used with sqlite3.
+        'ENGINE': 'semantic.rdf.backends.virtuoso',
+        'NAME': 'sparql',
+        # 'USER': '',
+        # 'PASSWORD': '',
+        'HOST': 'localhost',
+        'PORT': '8890',
+        'PREFIX': {
+            'base': '<http://semantica.globo.com/base/>',
+            'g1': '<http://semantica.globo.com/G1/>',
+        }
     }
 }
 

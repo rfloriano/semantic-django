@@ -6,13 +6,28 @@ from django.db.models.fields import *
 class AutoSemanticField(models.URLField):
     description = _("Auto Semantic Field")
 
-    def __init__(self, verbose_name='URI', name=None, primary_key=True, verify_exists=False, **kwargs):
+    def __init__(self, graph, verbose_name='URI', name=None, primary_key=True, verify_exists=False, **kwargs):
         super(AutoSemanticField, self).__init__(verbose_name, name, verify_exists, primary_key=primary_key, **kwargs)
+        self.graph = graph
 
 
 class URIField(models.URLField):
-    pass
+    description = _("URIField")
+
+    def __init__(self, *args, **kwargs):
+        graph = ''
+        if 'graph' in kwargs:
+            graph = kwargs.pop('graph')
+        super(URIField, self).__init__(*args, **kwargs)
+        self.graph = graph
 
 
 class LiteralField(models.CharField):
-    pass
+    description = _("LiteralField")
+
+    def __init__(self, *args, **kwargs):
+        graph = ''
+        if 'graph' in kwargs:
+            graph = kwargs.pop('graph')
+        super(LiteralField, self).__init__(*args, **kwargs)
+        self.graph = graph
