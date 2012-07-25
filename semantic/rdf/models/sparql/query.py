@@ -163,7 +163,6 @@ class SparqlQuery(Query):
         Parameter values won't necessarily be quoted correctly, since that is
         done by the database interface at execution time.
         """
-        import ipdb; ipdb.set_trace()
         sparql, params = self.get_compiler(DEFAULT_DB_ALIAS).as_sparql()
         return sparql % params
 

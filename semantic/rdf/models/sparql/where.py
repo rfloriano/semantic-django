@@ -13,12 +13,14 @@ from datastructures import EmptyResultSet, FullResultSet
 AND = 'AND'
 OR = 'OR'
 
+
 class EmptyShortCircuit(Exception):
     """
     Internal exception used to indicate that a "matches nothing" node should be
     added to the where-clause.
     """
     pass
+
 
 class WhereNode(tree.Node):
     """
@@ -34,6 +36,42 @@ class WhereNode(tree.Node):
     """
     default = AND
 
+    def add_default_where(self, data):
+
+    # def get_where_triples(self):
+    #     # place this method in where.py
+    #     tiple_format = '%(graph)s:%(field_name)s ?%(field_name)s'
+    #     opts = self.query.model._meta
+    #     uri_field = ''
+    #     where = []
+    #     where_optional = []
+    #     for field, model in opts.get_fields_with_model():
+    #         if field.primary_key:
+    #             uri_field = field.name
+    #         else:
+    #             if field.blank:
+    #                 where_optional.append(tiple_format % {
+    #                     'graph': field.graph,
+    #                     'field_name': field.name
+    #                 })
+    #             else:
+    #                 where.append(tiple_format % {
+    #                     'graph': field.graph,
+    #                     'field_name': field.name
+    #                 })
+    #     where_string = '?%s ' % uri_field
+    #     where_string += '; '.join(where)
+    #     for optional in where_optional:
+    #         where_string += ' OPTIONAL { ?%s %s }' % (uri_field, optional)
+
+    #     return where_string, ''
+
+
+        # import ipdb; ipdb.set_trace()
+        for field, model in data:
+            # self.add((Triple(), ), AND)
+            pass
+
     def add(self, data, connector):
         """
         Add a node to the where-tree. If the data is a list or tuple, it is
@@ -42,6 +80,7 @@ class WhereNode(tree.Node):
         (to avoid storing any reference to field objects). Otherwise, the 'data'
         is stored unchanged and can be any class with an 'as_sparql()' method.
         """
+        # (<django.db.models.sql.where.Constraint object at 0x10243c550>, 'exact', 'bla')
         if not isinstance(data, (list, tuple)):
             super(WhereNode, self).add(data, connector)
             return
@@ -72,7 +111,7 @@ class WhereNode(tree.Node):
         super(WhereNode, self).add((obj, lookup_type, annotation, value),
                 connector)
 
-    def as_sparql(self, qn, connection):
+    def as_sparql(self, fields, qn, connection):
         """
         Returns the SPARQL version of the where clause and the value to be
         substituted in. Returns None, None if this node is empty.
@@ -81,6 +120,8 @@ class WhereNode(tree.Node):
         (generally not needed except by the internal implementation for
         recursion).
         """
+        self.add_default_where(fields)
+
         if not self.children:
             return None, []
         result = []
@@ -250,6 +291,7 @@ class WhereNode(tree.Node):
                 if hasattr(child[3], 'relabel_aliases'):
                     child[3].relabel_aliases(change_map)
 
+
 class EverythingNode(object):
     """
     A node that matches everything.
@@ -261,6 +303,7 @@ class EverythingNode(object):
     def relabel_aliases(self, change_map, node=None):
         return
 
+
 class NothingNode(object):
     """
     A node that matches nothing.
@@ -271,6 +314,7 @@ class NothingNode(object):
     def relabel_aliases(self, change_map, node=None):
         return
 
+
 class ExtraWhere(object):
     def __init__(self, sparqls, params):
         self.sparqls = sparqls
@@ -278,6 +322,7 @@ class ExtraWhere(object):
 
     def as_sparql(self, qn=None, connection=None):
         return " AND ".join(self.sparqls), tuple(self.params or ())
+
 
 class Constraint(object):
     """
@@ -343,3 +388,11 @@ class Constraint(object):
     def relabel_aliases(self, change_map):
         if self.alias in change_map:
             self.alias = change_map[self.alias]
+
+
+class Triple(Constraint):
+    """
+    An object that can be passed to WhereNode.add() and knows how to
+    pre-process itself prior to including in the WhereNode.
+    """
+    pass

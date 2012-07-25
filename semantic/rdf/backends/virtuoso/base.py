@@ -121,7 +121,7 @@ class DatabaseOperations(BaseSemanticDatabaseOperations):
 
 
 class DatabaseWrapper(BaseDatabaseWrapper):
-    vendor = 'sparqlite'
+    vendor = 'virtuoso'
     # SPARQLite requires LIKE statements to include an ESCAPE clause if the value
     # being escaped has a percent or underscore in it.
     # See http://www.sparqlite.org/lang_expr.html for an explanation.
