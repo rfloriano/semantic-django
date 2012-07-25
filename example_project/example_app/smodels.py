@@ -15,4 +15,5 @@ class BasePrograma(models.SemanticModel):
     tem_edicao_do_programa = models.LiteralField(graph='base', max_length=200, blank=True)
 
     class Meta:
-        graph = u'http://semantica.globo.com/base/Programa'
+        graph = 'http://semantica.globo.com/base/'
+        node = 'Programa'

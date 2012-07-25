@@ -21,13 +21,15 @@ class SPARQLCompiler(object):
         is for things that can't necessarily be done in __init__ because we
         might not have all the pieces in place at that time.
         """
+        # opts = self.query.model._meta
+        # self.query.where.add_default_where(opts.get_fields_with_model())
         if not self.query.tables:
             self.query.join((None, self.query.model._meta.db_table, None, None))
         if (not self.query.select and self.query.default_cols and not
                 self.query.included_inherited_models):
             self.query.setup_inherited_models()
-        if self.query.select_related and not self.query.related_select_cols:
-            self.fill_related_selections()
+        # if self.query.select_related and not self.query.related_select_cols:
+        #     self.fill_related_selections()
 
     def quote_name_unless_alias(self, name):
         """
@@ -70,6 +72,7 @@ class SPARQLCompiler(object):
         if with_limits and self.query.low_mark == self.query.high_mark:
             return '', ()
 
+        import ipdb; ipdb.set_trace()
         self.pre_sparql_setup()
         out_cols = self.get_columns(with_col_aliases)
         ordering, ordering_group_by = self.get_ordering()
@@ -80,8 +83,10 @@ class SPARQLCompiler(object):
 
         qn = self.quote_name_unless_alias
 
-        where, w_params = self.get_where_triples()
-        # where, w_params = self.query.where.as_sparql(qn=qn, connection=self.connection)
+        # where, w_params = self.get_where_triples()
+        opts = self.query.model._meta
+        fields = opts.get_fields_with_model()
+        where, w_params = self.query.where.as_sparql(fields=fields, qn=qn, connection=self.connection)
         having, h_params = self.query.having.as_sparql(qn=qn, connection=self.connection)
         params = []
         for val in self.query.extra_select.itervalues():
@@ -92,8 +97,9 @@ class SPARQLCompiler(object):
             result.append('DISTINCT')
         result.append(' '.join(out_cols + self.query.ordering_aliases))
 
-        # result.append('FROM')
-        # result.extend(from_)
+        if from_:
+            result.append('FROM')
+            result.append(from_)
         # params.extend(f_params)
 
         if where:
@@ -158,34 +164,6 @@ class SPARQLCompiler(object):
             obj.clear_ordering(True)
         obj.bump_prefix()
         return obj.get_compiler(connection=self.connection).as_sparql()
-
-    def get_where_triples(self):
-        # place this method in where.py
-        tiple_format = '%(graph)s:%(field_name)s ?%(field_name)s'
-        opts = self.query.model._meta
-        uri_field = ''
-        where = []
-        where_optional = []
-        for field, model in opts.get_fields_with_model():
-            if field.primary_key:
-                uri_field = field.name
-            else:
-                if field.blank:
-                    where_optional.append(tiple_format % {
-                        'graph': field.graph,
-                        'field_name': field.name
-                    })
-                else:
-                    where.append(tiple_format % {
-                        'graph': field.graph,
-                        'field_name': field.name
-                    })
-        where_string = '?%s ' % uri_field
-        where_string += '; '.join(where)
-        for optional in where_optional:
-            where_string += ' OPTIONAL { ?%s %s }' % (uri_field, optional)
-
-        return where_string, ''
 
     def get_columns(self, with_aliases=False):
         """
@@ -481,38 +459,46 @@ class SPARQLCompiler(object):
         might change the tables we need. This means the select columns and
         ordering must be done first.
         """
-        result = []
-        qn = self.quote_name_unless_alias
-        qn2 = self.connection.ops.quote_name
-        first = True
-        for alias in self.query.tables:
-            if not self.query.alias_refcount[alias]:
-                continue
-            try:
-                name, alias, join_type, lhs, lhs_col, col, nullable = self.query.alias_map[alias]
-            except KeyError:
-                # Extra tables can end up in self.tables, but not in the
-                # alias_map if they aren't in a join. That's OK. We skip them.
-                continue
-            alias_str = (alias != name and ' %s' % alias or '')
-            if join_type and not first:
-                result.append('%s %s%s ON (%s.%s = %s.%s)'
-                        % (join_type, qn(name), alias_str, qn(lhs),
-                           qn2(lhs_col), qn(alias), qn2(col)))
-            else:
-                connector = not first and ', ' or ''
-                result.append('%s%s%s' % (connector, qn(name), alias_str))
-            first = False
-        for t in self.query.extra_tables:
-            alias, unused = self.query.table_alias(t)
-            # Only add the alias if it's not already present (the table_alias()
-            # calls increments the refcount, so an alias refcount of one means
-            # this is the only reference.
-            if alias not in self.query.alias_map or self.query.alias_refcount[alias] == 1:
-                connector = not first and ', ' or ''
-                result.append('%s%s' % (connector, qn(alias)))
-                first = False
-        return result, []
+        # result = []
+        # qn = self.quote_name_unless_alias
+        # qn2 = self.connection.ops.quote_name
+        # first = True
+        # for alias in self.query.tables:
+        #     if not self.query.alias_refcount[alias]:
+        #         continue
+        #     try:
+        #         name, alias, join_type, lhs, lhs_col, col, nullable = self.query.alias_map[alias]
+        #     except KeyError:
+        #         # Extra tables can end up in self.tables, but not in the
+        #         # alias_map if they aren't in a join. That's OK. We skip them.
+        #         continue
+        #     alias_str = (alias != name and ' %s' % alias or '')
+        #     if join_type and not first:
+        #         result.append('%s %s%s ON (%s.%s = %s.%s)'
+        #                 % (join_type, qn(name), alias_str, qn(lhs),
+        #                    qn2(lhs_col), qn(alias), qn2(col)))
+        #     else:
+        #         connector = not first and ', ' or ''
+        #         result.append('%s%s%s' % (connector, qn(name), alias_str))
+        #     first = False
+        # for t in self.query.extra_tables:
+        #     alias, unused = self.query.table_alias(t)
+        #     # Only add the alias if it's not already present (the table_alias()
+        #     # calls increments the refcount, so an alias refcount of one means
+        #     # this is the only reference.
+        #     if alias not in self.query.alias_map or self.query.alias_refcount[alias] == 1:
+        #         connector = not first and ', ' or ''
+        #         result.append('%s%s' % (connector, qn(alias)))
+        #         first = False
+        # return result, []
+
+        graph = self.query.model._meta.graph
+
+        if not graph.endswith('/'):
+            graph += '/'
+
+        graph = '<%s>' % graph
+        return graph, []
 
     def get_grouping(self):
         """

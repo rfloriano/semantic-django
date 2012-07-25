@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from django.core import validators
 from django.db.models.fields import *
 
 
@@ -23,11 +24,7 @@ class URIField(models.URLField):
 
 
 class LiteralField(models.CharField):
-    description = _("LiteralField")
-
-    def __init__(self, *args, **kwargs):
-        graph = ''
-        if 'graph' in kwargs:
-            graph = kwargs.pop('graph')
-        super(LiteralField, self).__init__(*args, **kwargs)
+    def __init__(self, graph, max_length=200, *args, **kwargs):
         self.graph = graph
+        super(LiteralField, self).__init__(*args, **kwargs)
+        self.validators.append(validators.MaxLengthValidator(self.max_length))
