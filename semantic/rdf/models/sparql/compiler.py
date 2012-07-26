@@ -72,21 +72,23 @@ class SPARQLCompiler(object):
         if with_limits and self.query.low_mark == self.query.high_mark:
             return '', ()
 
-        import ipdb; ipdb.set_trace()
+        # import ipdb; ipdb.set_trace()
         self.pre_sparql_setup()
         out_cols = self.get_columns(with_col_aliases)
         ordering, ordering_group_by = self.get_ordering()
 
         # This must come after 'select' and 'ordering' -- see docstring of
         # get_from_clause() for details.
-        from_, f_params = self.get_from_clause()
+        # TODO: garantir que o from busque do grafo certo, olhar casos: from g1: g1:candidatura e from base: base:Programa
+        # from_, f_params = self.get_from_clause()
+        from_, f_params = None, None
 
         qn = self.quote_name_unless_alias
 
         # where, w_params = self.get_where_triples()
         opts = self.query.model._meta
         fields = opts.get_fields_with_model()
-        where, w_params = self.query.where.as_sparql(fields=fields, qn=qn, connection=self.connection)
+        where, w_params = self.query.where.as_sparql(qn=qn, connection=self.connection, fields=fields)
         having, h_params = self.query.having.as_sparql(qn=qn, connection=self.connection)
         params = []
         for val in self.query.extra_select.itervalues():
@@ -496,8 +498,8 @@ class SPARQLCompiler(object):
 
         if not graph.endswith('/'):
             graph += '/'
-
         graph = '<%s>' % graph
+
         return graph, []
 
     def get_grouping(self):

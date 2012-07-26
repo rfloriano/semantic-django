@@ -5,6 +5,6 @@ Installation requirements are on file requirements.txt and can be installed usin
 Currently being developed a Django backend compatible with Virtuoso.
 
 Next steps:
-  - Create a generic field with a get_prep_lookup that add "optional" on sparql query when field's blanks is True
-  - Implement and ALWAYS call a "add_default_where" of WhereNode (this method always will add all fields of model and get all properties of semantic database)
   - Improve DatabaseWrapper's operators to create a query using FILTERS (Ex: FILTER (?var = graph:Node)) of SPARQL 
+  - Set of update SPARQL query when the object is saved
+  - Create semantic django compatibility with django forms and django admin

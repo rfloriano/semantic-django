@@ -127,15 +127,16 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     # See http://www.sparqlite.org/lang_expr.html for an explanation.
     operators = {
         'exact': '= %s',
+        'gt': '> %s',
+        'gte': '>= %s',
+        'lt': '< %s',
+        'lte': '<= %s',
+
         'iexact': "LIKE %s ESCAPE '\\'",
         'contains': "LIKE %s ESCAPE '\\'",
         'icontains': "LIKE %s ESCAPE '\\'",
         'regex': 'REGEXP %s',
         'iregex': "REGEXP '(?i)' || %s",
-        'gt': '> %s',
-        'gte': '>= %s',
-        'lt': '< %s',
-        'lte': '<= %s',
         'startswith': "LIKE %s ESCAPE '\\'",
         'endswith': "LIKE %s ESCAPE '\\'",
         'istartswith': "LIKE %s ESCAPE '\\'",
