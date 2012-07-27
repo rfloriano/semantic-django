@@ -10,10 +10,13 @@ from semantic.rdf import models
 
 class BasePrograma(models.SemanticModel):
     foto_perfil = models.LiteralField(graph='base', max_length=200, blank=True)
-    id_do_programa_na_webmedia = models.LiteralField(graph='base', max_length=200)
+    id_do_programa_na_webmedia = models.IntegerField(graph='base', max_length=200)
     faz_parte_do_canal = models.URIField(graph='base')
     tem_edicao_do_programa = models.LiteralField(graph='base', max_length=200, blank=True)
 
     class Meta:
         graph = 'http://semantica.globo.com/base/'
         node = 'Programa'
+
+    def __unicode__(self):
+        return self.uri
