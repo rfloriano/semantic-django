@@ -72,7 +72,6 @@ class SPARQLCompiler(object):
         if with_limits and self.query.low_mark == self.query.high_mark:
             return '', ()
 
-        # import ipdb; ipdb.set_trace()
         self.pre_sparql_setup()
         out_cols = self.get_columns(with_col_aliases)
         ordering, ordering_group_by = self.get_ordering()

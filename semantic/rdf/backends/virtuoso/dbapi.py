@@ -62,7 +62,9 @@ class Cursor(object):
         pass
 
     def _escape_param(self, param):
-        if isinstance(param, (str, unicode)):
+        if type(param) in typeToSchema:
+            return '"%s"^^%s' % (param, typeToSchema[type(param)])
+        elif isinstance(param, (str, unicode)):
             return '"%s"' % param
         return unicode(param)
 
@@ -82,8 +84,8 @@ class Cursor(object):
     def execute(self, sparql, params=[]):
         params = self.escape_params(params)
         sparql = '%s %s' % (' '.join(self.prefixes), sparql)
-        self.sparql = sparql
-        self.connection.setQuery(sparql)
+        self.sparql = sparql % params
+        self.connection.setQuery(self.sparql)
         self.results = self.connection.query().convert()["results"]["bindings"]
 
     def executemany(self, operation, seq_of_parameters):
@@ -146,6 +148,16 @@ def literal_datatype(node):
     if dt:
         return unicode(dt)
     return u'http://www.w3.org/2001/XMLSchema#string'
+
+typeToSchema = {
+    unicode: '<http://www.w3.org/2001/XMLSchema#string>',
+    bool: '<http://www.w3.org/2001/XMLSchema#boolean>',
+    decimal: '<http://www.w3.org/2001/XMLSchema#decimal>',
+    int: '<http://www.w3.org/2001/XMLSchema#integer>',
+    long: '<http://www.w3.org/2001/XMLSchema#long>',
+    float: '<http://www.w3.org/2001/XMLSchema#float>',
+    base64: '<http://www.w3.org/2001/XMLSchema#base64Binary>',
+}
 
 
 SchemaToPython = {  # (schema->python, python->schema)  Does not validate.

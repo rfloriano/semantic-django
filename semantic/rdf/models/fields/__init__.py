@@ -28,3 +28,9 @@ class LiteralField(models.CharField):
         self.graph = graph
         super(LiteralField, self).__init__(*args, **kwargs)
         self.validators.append(validators.MaxLengthValidator(self.max_length))
+
+
+class IntegerField(models.IntegerField):
+    def __init__(self, graph, *args, **kwargs):
+        self.graph = graph
+        super(IntegerField, self).__init__(*args, **kwargs)

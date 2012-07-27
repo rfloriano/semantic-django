@@ -18,12 +18,11 @@ from django.db.models.fields import FieldDoesNotExist
 from django.db.models.sql import aggregates as base_aggregates_module
 from django.db.models.sql.constants import *
 from django.db.models.sql.datastructures import EmptyResultSet, Empty, MultiJoin
-from django.db.models.sql.where import (Constraint, EverythingNode,
-    ExtraWhere, AND, OR)
 from django.core.exceptions import FieldError
 
 from semantic.rdf import connections
-from semantic.rdf.models.sparql.where import WhereNode
+from semantic.rdf.models.sparql.where import (Constraint, EverythingNode,
+    ExtraWhere, AND, OR, WhereNode)
 from semantic.rdf.models.sparql.expressions import SPARQLEvaluator
 
 __all__ = ['SparqlQuery', 'RawSemanticQuery']
@@ -1099,7 +1098,6 @@ class SparqlQuery(Query):
                 break
             self.promote_alias_chain(join_it, join_promote)
             self.promote_alias_chain(table_it, table_promote)
-
 
         if having_clause or force_having:
             if (alias, col) not in self.group_by:

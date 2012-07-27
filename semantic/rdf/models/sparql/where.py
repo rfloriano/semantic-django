@@ -15,7 +15,7 @@ OR = '||'
 
 DOT = '.'
 SEMICOLON = ';'
-EMPTY = ' '
+SPACE = ' '
 
 
 class EmptyShortCircuit(Exception):
@@ -71,12 +71,26 @@ class WhereNode(tree.Node):
     #     return where_string, ''
 
         # import ipdb; ipdb.set_trace()
+        default = []
+        optional = []
+        result_params = []
         for field, model in sorted(data, key=lambda field: field[0].blank):
-            if field.primary_key:
-                self.add(Triple(field), EMPTY)
+            triple = Triple(field)
+            if not triple.blank:
+                array = default
             else:
-                self.add(Triple(field), SEMICOLON)
-            # self.add((Triple(), ), AND)
+                array = optional
+            triple_string, triple_params = triple.as_sparql()
+            if triple_string:
+                array.append(triple_string)
+                result_params.extend(triple_params)
+
+        conn = ' %s ' % SEMICOLON
+        sparql_string = conn.join(default)
+        sparql_string += ' '
+        conn = '%s' % SPACE
+        sparql_string += conn.join(optional)
+        return sparql_string, result_params
 
     def add(self, data, connector):
         """
@@ -126,15 +140,11 @@ class WhereNode(tree.Node):
         (generally not needed except by the internal implementation for
         recursion).
         """
-        if fields:
-            self.add_default_where(fields)
 
         if not self.children:
             return None, []
         result = []
         result_params = []
-        optional = []
-        optional_params = []
         empty = True
         for child in self.children:
             try:
@@ -164,30 +174,27 @@ class WhereNode(tree.Node):
 
             empty = False
             if sparql:
-                if child.blank:
-                    array = optional
-                    array_params = optional_params
-                else:
-                    array = result
-                    array_params = result_params
-                array.append(sparql)
-                array_params.extend(params)
+                result.append(sparql)
+                result_params.extend(params)
         if empty:
             raise EmptyResultSet
 
         conn = ' %s ' % self.connector
         sparql_string = conn.join(result)
+        if sparql_string:
+            if self.negated:
+                sparql_string = 'FILTER (!%s)' % sparql_string
+            elif len(self.children) != 1:
+                sparql_string = 'FILTER (%s)' % sparql_string
 
-        sparql_string += ' '
+        default_params = []
+        if fields:
+            default_where, default_params = self.add_default_where(fields)
+            sparql_string = default_where + ' ' + sparql_string
 
-        conn = '%s' % EMPTY
-        sparql_string += conn.join(optional)
-        # if sparql_string:
-            # if self.negated:
-            #     sparql_string = 'NOT (%s)' % sparql_string
-            # elif len(self.children) != 1:
-            #     sparql_string = '(%s)' % sparql_string
-        return sparql_string, result_params
+        default_params.extend(result_params)
+        # import ipdb; ipdb.set_trace()
+        return sparql_string, default_params
 
     def make_atom(self, child, qn, connection):
         """
@@ -197,7 +204,6 @@ class WhereNode(tree.Node):
         Returns the string for the SPARQL fragment and the parameters to use for
         it.
         """
-        # import ipdb; ipdb.set_trace()
         lvalue, lookup_type, value_annot, params_or_value = child
         if hasattr(lvalue, 'process'):
             try:
@@ -280,6 +286,7 @@ class WhereNode(tree.Node):
         constraint (for example, the "T1.foo" portion in the clause
         "WHERE ... T1.foo = 6").
         """
+        # TODO: improve this method to add a namespace to cases that the propertie exist in more than one namespace
         table_alias, name, db_type = data
         if table_alias:
             lhs = '%s.%s' % (qn(table_alias), qn(name))
@@ -432,9 +439,11 @@ class Triple(object):
             return '%s:%s' % (graph, node)
 
     def as_sparql(self, qn=None, connection=None):
-        if self.field.primary_key:
-            return "?%s %s:%s %s" % (self.field.name, 'rdf', 'type', self.get_semantic_entity()), ()
         triple_string = "%s:%s ?%s" % (self.field.graph, self.field.name, self.field.name)
+        if self.field.primary_key:
+            triple_string = "?%s %s:%s %s" % (self.field.name, 'rdf', 'type', self.get_semantic_entity())
+
         if self.field.blank:
             triple_string = 'OPTIONAL { ?uri %s }' % triple_string
+
         return triple_string, ()

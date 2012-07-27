@@ -74,9 +74,10 @@ class DatabaseOperations(BaseSemanticDatabaseOperations):
         return 'NULL'
 
     def quote_name(self, name):
-        if name.startswith('"') and name.endswith('"'):
-            return name  # Quoting once is enough.
-        return '"%s"' % name
+        # if name.startswith('"') and name.endswith('"'):
+        #     return name  # Quoting once is enough.
+        # return '"%s"' % name
+        return '?%s' % name
 
     def no_limit_value(self):
         return -1
@@ -93,6 +94,15 @@ class DatabaseOperations(BaseSemanticDatabaseOperations):
         # Note: No requirement for reset of auto-incremented indices (cf. other
         # sparql_flush() implementations). Just return SPARQL at this point
         return sparql
+
+    def field_cast_sparql(self, db_type):
+        """
+        Given a column type (e.g. 'BLOB', 'VARCHAR'), returns the SQL necessary
+        to cast it before using it in a WHERE statement. Note that the
+        resulting string should contain a '%s' placeholder for the column being
+        searched against.
+        """
+        return '%s'
 
     def year_lookup_bounds(self, value):
         first = '%s-01-01'
