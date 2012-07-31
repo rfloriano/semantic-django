@@ -9,7 +9,7 @@ DEFAULT_NAMES = list(DEFAULT_NAMES)
 SEMANTIC_DEFAULT_NAMES = tuple(
     DEFAULT_NAMES + [
         'graph',
-        'node',
+        'namespace',
     ])
 
 

@@ -9,15 +9,15 @@ from semantic.rdf import models
 
 
 class BasePrograma(models.SemanticModel):
-    label = models.CharField(graph='rdfs', max_length=200)
+    nome = models.CharField(graph='rdfs', max_length=200, db_column='label')
     foto_perfil = models.CharField(graph='base', max_length=200, blank=True)
     id_do_programa_na_webmedia = models.IntegerField(graph='base', max_length=200)
     faz_parte_do_canal = models.URIField(graph='base')
     tem_edicao_do_programa = models.CharField(graph='base', max_length=200, blank=True)
 
     class Meta:
-        graph = 'http://semantica.globo.com/base/'
-        node = 'Programa'
+        graph = 'http://semantica.globo.com/'
+        namespace = 'http://semantica.globo.com/base/Programa'
 
     def __unicode__(self):
         return self.uri

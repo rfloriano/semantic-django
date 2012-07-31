@@ -436,13 +436,12 @@ class Triple(object):
             self.blank = True
 
     def get_semantic_entity(self):
-        graph = self.field.model._meta.graph.rstrip('/')
-        node = self.field.model._meta.node
+        namespace = self.field.model._meta.namespace
 
-        if graph.startswith('http'):
-            return '<%s/%s>' % (graph, node)
+        if namespace.startswith('http'):
+            return '<%s>' % (namespace)
         else:
-            return '%s:%s' % (graph, node)
+            return '%s' % (namespace)
 
     def as_sparql(self, qn=None, connection=None):
         triple_string = "%s:%s ?%s" % (self.field.graph, self.field.column, self.field.column)

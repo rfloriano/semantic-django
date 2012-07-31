@@ -79,8 +79,7 @@ class SPARQLCompiler(object):
         # This must come after 'select' and 'ordering' -- see docstring of
         # get_from_clause() for details.
         # TODO: garantir que o from busque do grafo certo, olhar casos: from g1: g1:candidatura e from base: base:Programa
-        # from_, f_params = self.get_from_clause()
-        from_, f_params = None, None
+        from_, f_params = self.get_from_clause()
 
         qn = self.quote_name_unless_alias
 
@@ -99,7 +98,6 @@ class SPARQLCompiler(object):
         result.append(' '.join(out_cols + self.query.ordering_aliases))
 
         if from_:
-            result.append('FROM')
             result.append(from_)
         # params.extend(f_params)
 
@@ -449,6 +447,12 @@ class SPARQLCompiler(object):
                 col = join[LHS_JOIN_COL]
         return [(alias, col, order)]
 
+    def wrap_graph(self, graph):
+        if graph.startswith('http'):
+            return 'FROM <%s>' % (graph)
+        else:
+            return 'FROM %s' % (graph)
+
     def get_from_clause(self):
         """
         Returns a list of strings that are joined together to go after the
@@ -494,12 +498,14 @@ class SPARQLCompiler(object):
         # return result, []
 
         graph = self.query.model._meta.graph
+        from_ = []
 
-        if not graph.endswith('/'):
-            graph += '/'
-        graph = '<%s>' % graph
-
-        return graph, []
+        if isinstance(graph, list):
+            for g in graph:
+                from_.append('%s' % self.wrap_graph(g))
+        else:
+            from_.append(self.wrap_graph(graph))
+        return ' '.join(from_), []
 
     def get_grouping(self):
         """
