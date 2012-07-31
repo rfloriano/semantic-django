@@ -2,6 +2,7 @@
 #
 # implements Python DBAPI 2.0
 # see PEP 249 (http://www.python.org/dev/peps/pep-0249/)
+import re
 import base64
 import decimal
 
@@ -62,10 +63,10 @@ class Cursor(object):
         pass
 
     def _escape_param(self, param):
-        if type(param) in typeToSchema:
-            return '"%s"^^%s' % (param, typeToSchema[type(param)])
-        elif isinstance(param, (str, unicode)):
-            return '"%s"' % param
+        # if type(param) in typeToSchema:
+        #     return '%s^^%s' % (param, typeToSchema[type(param)])
+        if isinstance(param, (str, unicode)):
+            return '%s' % param
         return unicode(param)
 
     def escape_params(self, parameters):

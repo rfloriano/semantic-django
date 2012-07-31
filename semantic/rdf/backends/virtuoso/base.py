@@ -137,20 +137,25 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     # See http://www.sparqlite.org/lang_expr.html for an explanation.
     operators = {
         'exact': '= %s',
+        'iexact': "'^%s$', 'i'",  # REGEX(?field, '^%s$', 'i')
+
         'gt': '> %s',
         'gte': '>= %s',
+
         'lt': '< %s',
         'lte': '<= %s',
 
-        'iexact': "LIKE %s ESCAPE '\\'",
-        'contains': "LIKE %s ESCAPE '\\'",
-        'icontains': "LIKE %s ESCAPE '\\'",
-        'regex': 'REGEXP %s',
-        'iregex': "REGEXP '(?i)' || %s",
-        'startswith': "LIKE %s ESCAPE '\\'",
-        'endswith': "LIKE %s ESCAPE '\\'",
-        'istartswith': "LIKE %s ESCAPE '\\'",
-        'iendswith': "LIKE %s ESCAPE '\\'",
+        'contains': "'%s'",  # REGEX(?field, '%s')
+        'icontains': "'%s', 'i'",  # REGEX(?field, '%s', 'i')
+
+        'regex': "'%s'",  # 'REGEX (?field, %s)
+        'iregex': "'%s', 'i'",  # REGEX(?field, '%s', 'i')
+
+        'startswith': "'^%s'",  # REGEX(?field, '^%s')
+        'endswith': "'%s$'",  # REGEX(?field, '%s$)
+
+        'istartswith': "'^%s', 'i'",  # REGEX(?field, '^%s', 'i')
+        'iendswith': "'%s$', 'i'",  # REGEX(?field, '%s$', 'i')
     }
 
     def __init__(self, *args, **kwargs):

@@ -6,7 +6,7 @@ from itertools import repeat
 
 from django.utils import tree
 from django.db.models.fields import Field
-from django.db.models.query_utils import QueryWrapper
+# from django.db.models.query_utils import QueryWrapper
 from datastructures import EmptyResultSet, FullResultSet
 
 # Connection types
@@ -101,6 +101,7 @@ class WhereNode(tree.Node):
         is stored unchanged and can be any class with an 'as_sparql()' method.
         """
         # (<django.db.models.sql.where.Constraint object at 0x10243c550>, 'exact', 'bla')
+        # import ipdb; ipdb.set_trace()
         if not isinstance(data, (list, tuple)):
             super(WhereNode, self).add(data, connector)
             return
@@ -183,17 +184,16 @@ class WhereNode(tree.Node):
         sparql_string = conn.join(result)
         if sparql_string:
             if self.negated:
-                sparql_string = 'FILTER (!%s)' % sparql_string
+                sparql_string = '!%s' % sparql_string
             elif len(self.children) != 1:
-                sparql_string = 'FILTER (%s)' % sparql_string
+                sparql_string = '%s' % sparql_string
 
         default_params = []
         if fields:
             default_where, default_params = self.add_default_where(fields)
-            sparql_string = default_where + ' ' + sparql_string
+            sparql_string = default_where + ' FILTER(' + sparql_string + ')'
 
         default_params.extend(result_params)
-        # import ipdb; ipdb.set_trace()
         return sparql_string, default_params
 
     def make_atom(self, child, qn, connection):
@@ -204,6 +204,7 @@ class WhereNode(tree.Node):
         Returns the string for the SPARQL fragment and the parameters to use for
         it.
         """
+        # import ipdb; ipdb.set_trace()
         lvalue, lookup_type, value_annot, params_or_value = child
         if hasattr(lvalue, 'process'):
             try:
@@ -213,6 +214,7 @@ class WhereNode(tree.Node):
         else:
             params = Field().get_db_prep_lookup(lookup_type, params_or_value,
                 connection=connection, prepared=True)
+
         if isinstance(lvalue, tuple):
             # A direct database column lookup.
             field_sparql = self.sparql_for_columns(lvalue, qn, connection)
@@ -237,7 +239,10 @@ class WhereNode(tree.Node):
             value_annot = True
 
         if lookup_type in connection.operators:
-            format = "%s %%s %%s" % (connection.ops.lookup_cast(lookup_type),)
+            if lookup_type in ('iexact', 'icontains', 'istartswith', 'iendswith', 'contains', 'startswith', 'endswith'):
+                format = "REGEX(%s, %%s %%s)" % (connection.ops.lookup_cast(lookup_type),)
+            else:
+                format = "%s %%s %%s" % (connection.ops.lookup_cast(lookup_type),)
             return (format % (field_sparql,
                               connection.operators[lookup_type] % cast_sparql,
                               extra), params)
@@ -349,7 +354,8 @@ class ExtraWhere(object):
         self.params = params
 
     def as_sparql(self, qn=None, connection=None):
-        return " AND ".join(self.sparqls), tuple(self.params or ())
+        conn = " %s " % AND
+        return conn.join(self.sparqls), tuple(self.params or ())
 
 
 class Constraint(object):
@@ -439,9 +445,9 @@ class Triple(object):
             return '%s:%s' % (graph, node)
 
     def as_sparql(self, qn=None, connection=None):
-        triple_string = "%s:%s ?%s" % (self.field.graph, self.field.name, self.field.name)
+        triple_string = "%s:%s ?%s" % (self.field.graph, self.field.column, self.field.column)
         if self.field.primary_key:
-            triple_string = "?%s %s:%s %s" % (self.field.name, 'rdf', 'type', self.get_semantic_entity())
+            triple_string = "?%s %s:%s %s" % (self.field.column, 'rdf', 'type', self.get_semantic_entity())
 
         if self.field.blank:
             triple_string = 'OPTIONAL { ?uri %s }' % triple_string

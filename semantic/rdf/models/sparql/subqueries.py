@@ -7,7 +7,8 @@ from django.db.models.fields import DateField, FieldDoesNotExist
 from django.db.models.sql.constants import *
 from django.db.models.sql.datastructures import Date
 from django.db.models.sql.query import Query
-from django.db.models.sql.where import AND, Constraint
+
+from semantic.rdf.models.sparql.where import AND, Constraint
 
 
 __all__ = ['DeleteQuery', 'UpdateQuery', 'InsertQuery', 'DateQuery',
