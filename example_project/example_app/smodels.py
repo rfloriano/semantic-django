@@ -16,6 +16,8 @@ class BasePrograma(models.SemanticModel):
     tem_edicao_do_programa = models.CharField(graph='base', max_length=200, blank=True)
 
     class Meta:
+        # FIXME: Remove this abstract property
+        abstract = True
         graph = 'http://semantica.globo.com/'
         namespace = 'http://semantica.globo.com/base/Programa'
 
