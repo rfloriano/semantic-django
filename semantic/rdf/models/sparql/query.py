@@ -1266,7 +1266,8 @@ class SparqlQuery(Query):
                         for (dupe_opts, dupe_col) in dupe_set:
                             self.update_dupe_avoidance(dupe_opts, dupe_col,
                                     alias)
-            cached_data = opts._join_cache.get(name)
+            cached_data = None
+            # cached_data = opts._join_cache.get(name)
             orig_opts = opts
             dupe_col = direct and field.column or field.field.column
             dedupe = dupe_col in opts.duplicate_targets
