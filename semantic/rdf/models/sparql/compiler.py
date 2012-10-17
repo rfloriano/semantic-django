@@ -500,11 +500,12 @@ class SPARQLCompiler(object):
         graph = self.query.model._meta.graph
         from_ = []
 
-        if isinstance(graph, list):
-            for g in graph:
-                from_.append('%s' % self.wrap_graph(g))
-        else:
-            from_.append(self.wrap_graph(graph))
+        # TODO: Support FROM graph
+        # if isinstance(graph, list):
+        #     for g in graph:
+        #         from_.append('%s' % self.wrap_graph(g))
+        # else:
+        #     from_.append(self.wrap_graph(graph))
         return ' '.join(from_), []
 
     def get_grouping(self):
