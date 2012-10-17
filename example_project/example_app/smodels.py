@@ -9,7 +9,7 @@ from semantic.rdf import models
 
 
 class BasePrograma(models.SemanticModel):
-    nome = models.CharField(graph='rdfs', max_length=200, db_column='label')
+    label = models.CharField(graph='rdfs', max_length=200)
     foto_perfil = models.CharField(graph='base', max_length=200, blank=True)
     id_do_programa_na_webmedia = models.IntegerField(graph='base', max_length=200)
     faz_parte_do_canal = models.URIField(graph='base')

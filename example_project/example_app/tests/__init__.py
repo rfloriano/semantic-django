@@ -1,5 +1,4 @@
 import rdflib
-from rdflib import plugin
 
 from django.test import TestCase
 from SPARQLWrapper import Wrapper
@@ -73,6 +72,6 @@ class TestBasePrograma(TestCase):
         self.assertEqual(rock_in_rio.faz_parte_do_canal, u'http://semantica.globo.com/base/Canal_Multishow')
         self.assertEqual(rock_in_rio.foto_perfil, '')
         self.assertEqual(rock_in_rio.id_do_programa_na_webmedia, u'5116')
-        self.assertEqual(rock_in_rio.nome, u'Rock in Rio')
+        self.assertEqual(rock_in_rio.label, u'Rock in Rio')
         self.assertEqual(rock_in_rio.tem_edicao_do_programa, '')
         self.assertEqual(rock_in_rio.uri, u'http://semantica.globo.com/base/Programa_Rock_in_Rio')
