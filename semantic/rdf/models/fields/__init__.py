@@ -13,7 +13,7 @@ class SemanticField(Field):
         self.graph = graph
 
     def get_db_prep_lookup(self, lookup_type, value, *args, **kwargs):
-        if lookup_type in ('startswith', 'istartswith', 'endswith', 'iendswith'):
+        if lookup_type in ('startswith', 'istartswith', 'endswith', 'iendswith', 'contains', 'icontains'):
             return [value]
         return super(SemanticField, self).get_db_prep_lookup(lookup_type, value, *args, **kwargs)
 
@@ -33,7 +33,7 @@ class CharField(SemanticField):
             result = value
         else:
             result = smart_unicode(value)
-        return '"%s"' % re.escape(result)
+        return '"%s"' % result
 
     def get_prep_value(self, value):
         return self.to_python(value)

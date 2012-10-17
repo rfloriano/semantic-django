@@ -1,71 +1,14 @@
-import rdflib
-
-from django.test import TestCase
-from SPARQLWrapper import Wrapper
+from semantic.tests import SemanticTestCase
 
 from example_app.smodels import BasePrograma
 
 
-def mocked_convert(self):
-    return self.response
+class TestBasePrograma(SemanticTestCase):
+    fixtures = ["example_app/tests/fixture.n3"]
 
-
-def mocked_query(self):
-    graph = rdflib.Graph()
-    graph.parse("example_app/tests/fixture.n3", format="n3")
-
-    qres = graph.query(self.queryString)
-
-    bindings_list = []
-    for row in qres.bindings:
-        row_dict = {}
-        for key, value in row.items():
-            if not value:
-                continue
-
-            row_item = {}
-
-            if isinstance(value, rdflib.term.URIRef):
-                type_ = 'uri'
-            elif isinstance(value, rdflib.term.Literal):
-                if hasattr(value, 'datatype') and value.datatype:
-                    type_ = 'typed-literal'
-                    row_item["datatype"] = value.datatype
-                else:
-                    type_ = 'literal'
-            else:
-                raise Exception('Unkown type')
-
-            row_item["type"] = type_
-            row_item["value"] = str(value)
-
-            row_dict[str(key)] = row_item
-
-        bindings_list.append(row_dict)
-
-    binding_str = {
-        'results': {
-            'bindings': bindings_list
-        }
-    }
-    return Wrapper.QueryResult(binding_str)
-
-
-class TestBasePrograma(TestCase):
-    def setUp(self):
-        self.originalSPARQLWrapper = Wrapper.SPARQLWrapper
-        Wrapper.SPARQLWrapper.query = mocked_query
-        self.originalQueryResult = Wrapper.QueryResult
-        Wrapper.QueryResult.convert = mocked_convert
-
-    def tearDown(self):
-        Wrapper.SPARQLWrapper = self.originalSPARQLWrapper
-        Wrapper.QueryResult = self.originalQueryResult
-
-    def test_filter_from_uri(self):
+    def test_filter_from_uri_with_exact(self):
         programas = BasePrograma.objects.filter(uri='http://semantica.globo.com/base/Programa_Rock_in_Rio')
-        expected_query = "SELECT ?uri ?label ?foto_perfil ?id_do_programa_na_webmedia ?faz_parte_do_canal ?tem_edicao_do_programa WHERE { ?uri rdf:type <http://semantica.globo.com/base/Programa> ; rdfs:label ?label ; base:id_do_programa_na_webmedia ?id_do_programa_na_webmedia ; base:faz_parte_do_canal ?faz_parte_do_canal OPTIONAL { ?uri base:foto_perfil ?foto_perfil } OPTIONAL { ?uri base:tem_edicao_do_programa ?tem_edicao_do_programa } FILTER(?uri = <http://semantica.globo.com/base/Programa_Rock_in_Rio> ) }"
-        self.assertEqual(programas.query.__str__(), expected_query)
+        self.assertEqual(len(programas), 1)
 
     def test_get_from_uri(self):
         rock_in_rio = BasePrograma.objects.get(uri='http://semantica.globo.com/base/Programa_Rock_in_Rio')
@@ -75,3 +18,59 @@ class TestBasePrograma(TestCase):
         self.assertEqual(rock_in_rio.label, u'Rock in Rio')
         self.assertEqual(rock_in_rio.tem_edicao_do_programa, '')
         self.assertEqual(rock_in_rio.uri, u'http://semantica.globo.com/base/Programa_Rock_in_Rio')
+
+    def test_get_from_label_with_filter_startswith(self):
+        programas = BasePrograma.objects.filter(label__startswith='Rock')
+        self.assertEqual(len(programas), 1)
+
+    def test_get_from_label_with_filter_endswith(self):
+        programas = BasePrograma.objects.filter(label__endswith='Rio')
+        self.assertEqual(len(programas), 1)
+
+    def test_get_from_label_with_filter_istartswith(self):
+        programas = BasePrograma.objects.filter(label__istartswith='rock')
+        self.assertEqual(len(programas), 1)
+
+    def test_get_from_label_with_filter_iendswith(self):
+        programas = BasePrograma.objects.filter(label__iendswith='rio')
+        self.assertEqual(len(programas), 1)
+
+    def test_get_from_label_with_filter_greatest(self):
+        programas = BasePrograma.objects.filter(id_do_programa_na_webmedia__gt='5115')
+        self.assertEqual(len(programas), 1)
+
+    def test_get_from_label_with_filter_greatest_or_equal(self):
+        programas = BasePrograma.objects.filter(id_do_programa_na_webmedia__gte='5116')
+        self.assertEqual(len(programas), 1)
+
+    def test_get_from_label_with_filter_less_than(self):
+        programas = BasePrograma.objects.filter(id_do_programa_na_webmedia__lt='5117')
+        self.assertEqual(len(programas), 1)
+
+    def test_get_from_label_with_filter_less_than_or_equal(self):
+        programas = BasePrograma.objects.filter(id_do_programa_na_webmedia__lte='5116')
+        self.assertEqual(len(programas), 1)
+
+    def test_get_from_label_with_filter_exact(self):
+        programas = BasePrograma.objects.filter(label__exact='Rock in Rio')
+        self.assertEqual(len(programas), 1)
+
+    def test_get_from_label_with_filter_iexact(self):
+        programas = BasePrograma.objects.filter(label__iexact='rOcK iN rIo')
+        self.assertEqual(len(programas), 1)
+
+    def test_get_from_label_with_filter_regex(self):
+        programas = BasePrograma.objects.filter(label__regex='Rock')
+        self.assertEqual(len(programas), 1)
+
+    def test_get_from_label_with_filter_iregex(self):
+        programas = BasePrograma.objects.filter(label__iregex='rock')
+        self.assertEqual(len(programas), 1)
+
+    def test_get_from_label_with_filter_contains(self):
+        programas = BasePrograma.objects.filter(label__contains='ck in Rio')
+        self.assertEqual(len(programas), 1)
+
+    def test_get_from_label_with_filter_icontains(self):
+        programas = BasePrograma.objects.filter(label__icontains='ck in rio')
+        self.assertEqual(len(programas), 1)

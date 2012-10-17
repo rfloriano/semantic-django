@@ -4,6 +4,7 @@ from django.db.models.sql.constants import *
 from django.db.models.sql.datastructures import EmptyResultSet
 from django.db.models.sql.query import get_proxied_model, get_order_dir, \
      select_related_descend, Query
+from django.conf import settings
 
 from semantic.rdf.models.sparql.expressions import SPARQLEvaluator
 
@@ -500,12 +501,12 @@ class SPARQLCompiler(object):
         graph = self.query.model._meta.graph
         from_ = []
 
-        # TODO: Support FROM graph
-        # if isinstance(graph, list):
-        #     for g in graph:
-        #         from_.append('%s' % self.wrap_graph(g))
-        # else:
-        #     from_.append(self.wrap_graph(graph))
+        if not getattr(settings, 'TESTING', False):
+            if isinstance(graph, list):
+                for g in graph:
+                    from_.append('%s' % self.wrap_graph(g))
+            else:
+                from_.append(self.wrap_graph(graph))
         return ' '.join(from_), []
 
     def get_grouping(self):

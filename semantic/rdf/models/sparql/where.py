@@ -239,7 +239,7 @@ class WhereNode(tree.Node):
             value_annot = True
 
         if lookup_type in connection.operators:
-            if lookup_type in ('iexact', 'icontains', 'istartswith', 'iendswith', 'contains', 'startswith', 'endswith'):
+            if lookup_type in ('iexact', 'icontains', 'istartswith', 'iendswith', 'contains', 'startswith', 'endswith', 'regex', 'iregex'):
                 format = "REGEX(%s, %%s %%s)" % (connection.ops.lookup_cast(lookup_type),)
             else:
                 format = "%s %%s %%s" % (connection.ops.lookup_cast(lookup_type),)
