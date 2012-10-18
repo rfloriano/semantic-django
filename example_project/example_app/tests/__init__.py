@@ -97,6 +97,12 @@ class TestBasePrograma(SemanticTestCase):
         self.assertContains(response, '<input id="id_label" type="text" name="label" value="Rock in Rio" maxlength="200" />')
         self.assertContains(response, '<input id="id_uri" type="text" name="uri" value="http://semantica.globo.com/base/Programa_Rock_in_Rio" maxlength="200" />')
 
+    def test_field_label_has_label_label(self):
+        # regression test related to bug introduced in b1bb72e6f386bdf25e35d69d01ef1da417e4b20e
+        response = self.client.get('/admin/example_app/baseprograma/add/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<label for="id_uri" class="required">Uri:</label>')
+
     def test_if_can_add_baseprograma_objects_in_admin(self):
         response = self.client.get('/admin/example_app/baseprograma/add/')
         self.assertEqual(response.status_code, 200)
