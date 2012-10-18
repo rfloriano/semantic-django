@@ -4,7 +4,14 @@ from example_app.smodels import BasePrograma
 
 
 class TestBasePrograma(SemanticTestCase):
-    fixtures = ["example_app/tests/fixture.n3"]
+    fixtures = ["example_app/fixtures/auth_user.json"]
+    semantic_fixtures = ["example_app/fixtures/fixture.n3"]
+
+    def setUp(self):
+        self.client.login(username='super', password='secret')
+
+    def tearDown(self):
+        self.client.logout()
 
     def test_filter_from_uri_with_exact(self):
         programas = BasePrograma.objects.filter(uri='http://semantica.globo.com/base/Programa_Rock_in_Rio')
@@ -74,3 +81,28 @@ class TestBasePrograma(SemanticTestCase):
     def test_get_from_label_with_filter_icontains(self):
         programas = BasePrograma.objects.filter(label__icontains='ck in rio')
         self.assertEqual(len(programas), 1)
+
+    def test_if_can_list_baseprograma_objects_in_admin(self):
+        response = self.client.get('/admin/example_app/baseprograma/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'http://semantica.globo.com/base/Programa_Rock_in_Rio')
+
+    def test_if_can_edit_a_baseprograma_objects_in_admin(self):
+        response = self.client.get('/admin/example_app/baseprograma/http_3A_2F_2Fsemantica.globo.com_2Fbase_2FPrograma_5FRock_5Fin_5FRio/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<input type="text" name="faz_parte_do_canal" value="http://semantica.globo.com/base/Canal_Multishow" id="id_faz_parte_do_canal" />')
+        self.assertContains(response, '<input id="id_foto_perfil" type="text" name="foto_perfil" maxlength="200" />')
+        self.assertContains(response, '<input id="id_tem_edicao_do_programa" type="text" name="tem_edicao_do_programa" maxlength="200" />')
+        self.assertContains(response, '<input id="id_id_do_programa_na_webmedia" type="text" class="vIntegerField" value="5116" name="id_do_programa_na_webmedia" />')
+        self.assertContains(response, '<input id="id_label" type="text" name="label" value="Rock in Rio" maxlength="200" />')
+        self.assertContains(response, '<input type="text" name="uri" value="http://semantica.globo.com/base/Programa_Rock_in_Rio" id="id_uri" />')
+
+    def test_if_can_add_baseprograma_objects_in_admin(self):
+        response = self.client.get('/admin/example_app/baseprograma/add/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<input type="text" name="faz_parte_do_canal" id="id_faz_parte_do_canal" />')
+        self.assertContains(response, '<input id="id_foto_perfil" type="text" name="foto_perfil" maxlength="200" />')
+        self.assertContains(response, '<input id="id_tem_edicao_do_programa" type="text" name="tem_edicao_do_programa" maxlength="200" />')
+        self.assertContains(response, '<input id="id_id_do_programa_na_webmedia" type="text" class="vIntegerField" name="id_do_programa_na_webmedia" />')
+        self.assertContains(response, '<input id="id_label" type="text" name="label" maxlength="200" />')
+        self.assertContains(response, '<input type="text" name="uri" id="id_uri" />')
