@@ -51,9 +51,7 @@ class URLField(CharField):
 
     def __init__(self, *args, **kwargs):
         kwargs['max_length'] = kwargs.get('max_length', 200)
-        verify_exists = kwargs.get('verify_exists', True)
-        if 'verify_exists' in kwargs:
-            kwargs.pop('verify_exists')
+        verify_exists = kwargs.pop('verify_exists', True)
         CharField.__init__(self, *args, **kwargs)
 
         self.validators.append(validators.URLValidator(verify_exists=verify_exists))
