@@ -1,9 +1,9 @@
 import unittest
 
-from semantic.rdf.models.fields import URLField
+from semantic.rdf.models.fields import URLField, URIField
 
 
-class TestSemanticFields(unittest.TestCase):
+class URLFieldTestCase(unittest.TestCase):
     def setUp(self):
         self.url = URLField(graph='base')
 
@@ -16,3 +16,21 @@ class TestSemanticFields(unittest.TestCase):
     def test_url_field_should_have_verify_exists_validator_true_by_default(self):
         url_validator = self.url.validators[1]
         self.assertTrue(url_validator.verify_exists)
+
+    def test_url_field_should_override_verify_exists(self):
+        url = URLField(graph='base', verify_exists=False)
+        url_validator = url.validators[1]
+        self.assertFalse(url_validator.verify_exists)
+
+
+class URIFieldTestCase(unittest.TestCase):
+    def test_uri_field_should_have_verify_exists_validator_false_by_default(self):
+        uri = URIField(graph='base')
+        uri_validator = uri.validators[1]
+        self.assertFalse(uri_validator.verify_exists)
+
+    def test_uri_field_should_override_verify_exists(self):
+        url = URLField(graph='base', verify_exists=True)
+        url_validator = url.validators[1]
+        self.assertTrue(url_validator.verify_exists)
+
