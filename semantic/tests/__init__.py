@@ -1,8 +1,20 @@
+import subprocess
 import rdflib
 from SPARQLWrapper import Wrapper
 
 from django.test import TestCase
+from django.conf import settings
 
+db = settings.SEMANTIC_DATABASES['default']
+
+ISQL = "isql -U %(user)s -P %(pwd)s -H %(host)s -S %(port)s" %\
+    {"user": db.get('USER', 'dba'),
+     "pwd": db.get('PASSWORD', 'dba'),
+     "host": db.get('HOST', 'localhost'),
+     "port": db.get('PORT', '8890')}
+ISQL_CMD = "%s < %s"
+ISQL_UP = "DB.DBA.TTLP_MT_LOCAL_FILE('%(ttl)s', '', '%(graph)s');"
+ISQL_DOWN = "SPARQL CLEAR GRAPH <%(graph)s>;"
 
 graph = rdflib.Graph()
 
@@ -49,19 +61,51 @@ def mocked_convert(self):
     return self.response
 
 
+def run_isql(cmd):
+    isql_cmd = ISQL_CMD % (ISQL, cmd)
+    process = subprocess.Popen(isql_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout_value, stderr_value = process.communicate()
+
+
 class SemanticTestCase(TestCase):
-    def _fixture_setup(self):
+
+    allow_virtuoso_connection = False
+    graph = "http://testgraph.globo.com"
+
+    def _setup_memory(self):
         self.originalSPARQLWrapper = Wrapper.SPARQLWrapper
         Wrapper.SPARQLWrapper.query = mocked_query
         self.originalQueryResult = Wrapper.QueryResult
         Wrapper.QueryResult.convert = mocked_convert
 
+    def _teardown_memory(self):
+        Wrapper.SPARQLWrapper = self.originalSPARQLWrapper
+        Wrapper.QueryResult = self.originalQueryResult
+
+    def _upload_fixture_to_memory(self, fixture):
+        graph.parse(fixture, format="n3")
+
+    def _upload_fixture_to_virtuoso(self, fixture):
+        isql_up = ISQL_UP % {"ttl": fixture, "graph": self.graph}
+        run_isql(isql_up)
+
+    def _delete_fixture_from_virtuoso(self, fixture):
+        isql_down = ISQL_DOWN % {"graph": self.graph}
+        run_isql(isql_down)
+
+    def _fixture_setup(self):
+        upload = self._upload_fixture_to_virtuoso
+        if not self.allow_virtuoso_connection:
+            self._setup_memory()
+            upload = self._upload_fixture_to_memory
         if hasattr(self, 'semantic_fixtures'):
             for fixture in self.semantic_fixtures:
-                graph.parse(fixture, format="n3")
-
+                upload(fixture)
         super(SemanticTestCase, self)._fixture_setup()
 
     def _fixture_teardown(self):
-        Wrapper.SPARQLWrapper = self.originalSPARQLWrapper
-        Wrapper.QueryResult = self.originalQueryResult
+        if not self.allow_virtuoso_connection:
+            self._teardown_memory()
+        else:
+            self._delete_fixture_from_virtuoso()
+        super(SemanticTestCase, self)._fixture_teardown()
