@@ -3,8 +3,17 @@ clean:
 setup:
 	@pip install -r requirements.txt
 
-test:
+test-example-project:
+	@echo "Running example project tests"
 	@cd example_project; PYTHONPATH='..' python manage.py test example_app --settings=example_project.settings_test
+	@echo "----------"
+	@echo
+
+test-semantic-app:
+	@echo "Running semantic app tests"
+	@cd semantic; nosetests .
+
+test: test-example-project test-semantic-app
 
 syncdb:
 	@cd example_project; PYTHONPATH='..' python manage.py syncdb

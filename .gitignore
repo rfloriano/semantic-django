@@ -3,3 +3,4 @@
 *.sw*
 .DS_Store
 example_project/example.db
+semantic/relational.db
