@@ -8,6 +8,26 @@ class SemanticQuerySet(QuerySet):
         super(SemanticQuerySet, self).__init__(model, query, using)
         self.query = query or sparql.SparqlQuery(self.model)
 
+    def _update(self, values):
+        """
+        A version of update that accepts field objects instead of field names.
+        Used primarily for model saving and not intended for use by general
+        code (it requires too much poking around at model internals to be
+        useful at that level).
+        """
+        # Based on QuerySet._update, available at django/db/models/query
+        # changes:
+        # (+) new line
+        # (*) changed
+        # (-) removed (commented)
+        assert self.query.can_filter(), \
+                "Cannot update a query once a slice has been taken."
+        query = self.query.clone(sparql.UpdateQuery)  # (*)
+        query.add_update_fields(values)
+        self._result_cache = None
+        return query.get_compiler(self.db).execute_sparql(None)  #(*)
+    _update.alters_data = True
+
 
 class SemanticEmptyQuerySet(EmptyQuerySet):
     pass

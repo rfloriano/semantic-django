@@ -1,15 +1,14 @@
 import sys
 import copy
 
-from django.db.models.base import subclass_exception
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, FieldError
-from django.db.models.loading import register_models, get_model
+from django.db.models import signals
+from django.db.models.base import ModelBase, Model, subclass_exception
 from django.db.models.fields.related import OneToOneField
+from django.db.models.loading import register_models, get_model
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, FieldError
 
-from django.db.models.base import ModelBase, Model
-
+from semantic.rdf import connections
 from semantic.rdf.models.options import SemanticOptions
-
 from semantic.rdf.models.fields import AutoSemanticField
 from semantic.rdf.models.manager import SemanticManager
 
@@ -206,9 +205,122 @@ class SemanticModel(Model):
 
     uri = AutoSemanticField(graph='base')
     objects = SemanticManager()
+    _base_manager = objects
 
     class Meta:
         abstract = True
+
+    def save_base(self, raw=False, cls=None, origin=None, force_insert=False,
+            force_update=False, using='default'):
+        # this method is based on Model.save_base from django/db/models/base.py
+        # changes:
+        # (+) new line
+        # (*) changed
+        # (-) removed (commented)
+
+        # using = using or router.db_for_write(self.__class__, instance=self)  # (-)
+        connection = connections  #[using]  # (*)
+
+        assert not (force_insert and force_update)
+        if cls is None:
+            cls = self.__class__
+            meta = cls._meta
+            if not meta.proxy:
+                origin = cls
+        else:
+            meta = cls._meta
+
+        if origin and not meta.auto_created:
+            signals.pre_save.send(sender=origin, instance=self, raw=raw, using=using)
+
+        # If we are in a raw save, save the object exactly as presented.
+        # That means that we don't try to be smart about saving attributes
+        # that might have come from the parent class - we just save the
+        # attributes we have been given to the class we have been given.
+        # We also go through this process to defer the save of proxy objects
+        # to their actual underlying model.
+        if not raw or meta.proxy:
+            if meta.proxy:
+                org = cls
+            else:
+                org = None
+            for parent, field in meta.parents.items():
+                # At this point, parent's primary key field may be unknown
+                # (for example, from administration form which doesn't fill
+                # this field). If so, fill it.
+                if field and getattr(self, parent._meta.pk.attname) is None and getattr(self, field.attname) is not None:
+                    setattr(self, parent._meta.pk.attname, getattr(self, field.attname))
+
+                self.save_base(cls=parent, origin=org, using=using)
+
+                if field:
+                    setattr(self, field.attname, self._get_pk_val(parent._meta))
+            if meta.proxy:
+                return
+
+        if not meta.proxy:
+            non_pks = [f for f in meta.local_fields if not f.primary_key]
+
+            # First, try an UPDATE. If that doesn't update anything, do an INSERT.
+            pk_val = self._get_pk_val(meta)
+            pk_set = pk_val is not None
+            record_exists = True
+            manager = cls._base_manager
+            if pk_set:
+                # Determine whether a record with the primary key already exists.
+                if (force_update or (not force_insert and
+                        manager.using(using).filter(pk=pk_val).exists())):
+                    # It does already exist, so do an UPDATE.
+                    if force_update or non_pks:
+                        values = [(f, None, (raw and getattr(self, f.attname) or f.pre_save(self, False))) for f in non_pks]
+                        rows = manager.using(using).filter(pk=pk_val)._update(values)
+                        if force_update and not rows:
+                            raise DatabaseError("Forced update did not affect any rows.")
+                else:
+                    record_exists = False
+            if not pk_set or not record_exists:
+                if meta.order_with_respect_to:
+                    # If this is a model with an order_with_respect_to
+                    # autopopulate the _order field
+                    field = meta.order_with_respect_to
+                    order_value = manager.using(using).filter(**{field.name: getattr(self, field.attname)}).count()
+                    self._order = order_value
+
+                if not pk_set:
+                    if force_update:
+                        raise ValueError("Cannot force an update in save() with no primary key.")
+                    values = [(f, f.get_db_prep_save(raw and getattr(self, f.attname) or f.pre_save(self, True), connection=connection))
+                        for f in meta.local_fields if not isinstance(f, AutoField)]
+                else:
+                    values = [(f, f.get_db_prep_save(raw and getattr(self, f.attname) or f.pre_save(self, True), connection=connection))
+                        for f in meta.local_fields]
+
+                record_exists = False
+
+                update_pk = bool(meta.has_auto_field and not pk_set)
+                if values:
+                    # Create a new record.
+                    result = manager._insert(values, return_id=update_pk, using=using)
+                else:
+                    # Create a new record with defaults for everything.
+                    result = manager._insert([(meta.pk, connection.ops.pk_default_value())], return_id=update_pk, raw_values=True, using=using)
+
+                if update_pk:
+                    setattr(self, meta.pk.attname, result)
+            transaction.commit_unless_managed(using=using)
+
+        # Store the database on which the object was saved
+        self._state.db = using
+        # Once saved, this is no longer a to-be-added instance.
+        self._state.adding = False
+
+        # Signal that the save is complete
+        if origin and not meta.auto_created:
+            signals.post_save.send(sender=origin, instance=self,
+                created=(not record_exists), raw=raw, using=using)
+
+
+    save_base.alters_data = True
 
     # def __init__(self, *args, **kwargs):
     #     # Set up the storage for instance state

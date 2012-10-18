@@ -6,8 +6,8 @@ from django.core.exceptions import FieldError
 from django.db.models.fields import DateField, FieldDoesNotExist
 from django.db.models.sql.constants import *
 from django.db.models.sql.datastructures import Date
-from django.db.models.sql.query import Query
 
+from semantic.rdf.models.sparql.query import SparqlQuery
 from semantic.rdf.models.sparql.where import AND, Constraint
 
 
@@ -15,7 +15,7 @@ __all__ = ['DeleteQuery', 'UpdateQuery', 'InsertQuery', 'DateQuery',
         'AggregateQuery']
 
 
-class DeleteQuery(Query):
+class DeleteQuery(SparqlQuery):
     """
     Delete queries are done through this class, since they are more constrained
     than general queries.
@@ -44,10 +44,11 @@ class DeleteQuery(Query):
             self.do_query(self.model._meta.db_table, where, using=using)
 
 
-class UpdateQuery(Query):
+class UpdateQuery(SparqlQuery):
     """
     Represents an "update" SPARQL query.
     """
+    # Based on UpdateQuery, available at django/db/models/sql/subqueries.py
 
     compiler = 'SPARQLUpdateCompiler'
 
@@ -135,7 +136,7 @@ class UpdateQuery(Query):
         return result
 
 
-class InsertQuery(Query):
+class InsertQuery(SparqlQuery):
     compiler = 'SPARQLInsertCompiler'
 
     def __init__(self, *args, **kwargs):
@@ -175,7 +176,7 @@ class InsertQuery(Query):
             self.values.extend(placeholders)
 
 
-class DateQuery(Query):
+class DateQuery(SparqlQuery):
     """
     A DateQuery is a normal query, except that it specifically selects a single
     date field. This requires some special handling when converting the results
@@ -215,7 +216,7 @@ class DateQuery(Query):
             self.add_filter(("%s__isnull" % field_name, False))
 
 
-class AggregateQuery(Query):
+class AggregateQuery(SparqlQuery):
     """
     An AggregateQuery takes another query as a parameter to the FROM
     clause and only selects the elements in the provided list.

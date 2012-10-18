@@ -778,6 +778,7 @@ class SPARQLCompiler(object):
                 return
 
         cursor = self.connection.cursor()
+        import pdb; pdb.set_trace()
         cursor.execute(sparql, params)
 
         if not result_type:
