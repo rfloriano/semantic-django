@@ -52,8 +52,10 @@ class URLField(CharField):
 
 
 class URIField(URLField):
+    def to_python(self, value):
+        return value
+
     def get_prep_value(self, value):
-        "Perform preliminary non-db specific value checks and conversions."
         return '<%s>' % value
 
     def get_db_prep_value(self, value, connection, prepared=False):
