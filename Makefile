@@ -9,5 +9,8 @@ test:
 syncdb:
 	@cd example_project; PYTHONPATH='..' python manage.py syncdb
 
+shell:
+	@cd example_project; PYTHONPATH='..' python manage.py shell
+
 server: syncdb
-	cd example_project; PYTHONPATH='..' python manage.py runserver
+	@cd example_project; PYTHONPATH='..' python manage.py runserver
