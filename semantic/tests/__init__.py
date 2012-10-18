@@ -56,9 +56,11 @@ class SemanticTestCase(TestCase):
         self.originalQueryResult = Wrapper.QueryResult
         Wrapper.QueryResult.convert = mocked_convert
 
-        if hasattr(self, 'fixtures'):
-            for fixture in self.fixtures:
+        if hasattr(self, 'semantic_fixtures'):
+            for fixture in self.semantic_fixtures:
                 graph.parse(fixture, format="n3")
+
+        super(SemanticTestCase, self)._fixture_setup()
 
     def _fixture_teardown(self):
         Wrapper.SPARQLWrapper = self.originalSPARQLWrapper
