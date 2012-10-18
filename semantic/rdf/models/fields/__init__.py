@@ -76,5 +76,5 @@ class AutoSemanticField(URIField):
         self.graph = graph
 
 
-class IntegerField(IntegerField, CharField):
+class IntegerField(IntegerField, SemanticField):
     pass
