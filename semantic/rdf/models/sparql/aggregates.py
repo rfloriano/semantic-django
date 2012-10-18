@@ -2,6 +2,7 @@
 Classes to represent the default SPARQL aggregate functions
 """
 
+
 class AggregateField(object):
     """An internal field mockup used to identify aggregates in the
     data-conversion parts of the database backend.
@@ -14,6 +15,7 @@ class AggregateField(object):
 
 ordinal_aggregate_field = AggregateField('IntegerField')
 computed_aggregate_field = AggregateField('FloatField')
+
 
 class Aggregate(object):
     """
@@ -96,19 +98,40 @@ class Avg(Aggregate):
     is_computed = True
     sparql_function = 'AVG'
 
+
 class Count(Aggregate):
     is_ordinal = True
     sparql_function = 'COUNT'
     sparql_template = '%(function)s(%(distinct)s%(field)s)'
 
     def __init__(self, col, distinct=False, **extra):
-        super(Count, self).__init__(col, distinct=distinct and 'DISTINCT ' or '', **extra)
+        super(Count, self).__init__(col, **extra)
+        self.distinct = distinct and 'DISTINCT ' or ''
+
+    def as_sparql(self, qn, connection):
+        field_name = self.col
+
+        params = {
+            'function': self.sparql_function,
+            'field': field_name,
+            'distinct': self.distinct
+        }
+        params.update(self.extra)
+
+        return self.sparql_template % params
+
 
 class Max(Aggregate):
     sparql_function = 'MAX'
 
+
 class Min(Aggregate):
     sparql_function = 'MIN'
+
+
+class Sum(Aggregate):
+    sparql_function = 'SUM'
+
 
 class StdDev(Aggregate):
     is_computed = True
@@ -117,8 +140,6 @@ class StdDev(Aggregate):
         super(StdDev, self).__init__(col, **extra)
         self.sparql_function = sample and 'STDDEV_SAMP' or 'STDDEV_POP'
 
-class Sum(Aggregate):
-    sparql_function = 'SUM'
 
 class Variance(Aggregate):
     is_computed = True

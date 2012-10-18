@@ -15,11 +15,11 @@ from django.utils.encoding import force_unicode
 from django.db import DEFAULT_DB_ALIAS
 from django.db.models import signals
 from django.db.models.fields import FieldDoesNotExist
-from django.db.models.sql import aggregates as base_aggregates_module
 from django.db.models.sql.constants import *
 from django.db.models.sql.datastructures import EmptyResultSet, Empty, MultiJoin
 from django.core.exceptions import FieldError
 
+from semantic.rdf.models.sparql import aggregates as base_aggregates_module
 from semantic.rdf import connections
 from semantic.rdf.models.sparql.where import (Constraint, EverythingNode,
     ExtraWhere, AND, OR, WhereNode)
@@ -316,7 +316,8 @@ class SparqlQuery(Query):
             return value
         elif aggregate.is_ordinal:
             # Any ordinal aggregate (e.g., count) returns an int
-            return int(value)
+            # Result: ('callret-0', u'1')
+            return int(value[1])
         elif aggregate.is_computed:
             # Any computed aggregate (e.g., avg) returns a float
             return float(value)
