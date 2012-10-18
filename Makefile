@@ -6,5 +6,8 @@ setup:
 test:
 	@cd example_project; PYTHONPATH='..' python manage.py test example_app --settings=example_project.settings_test
 
-server:
+syncdb:
+	@cd example_project; PYTHONPATH='..' python manage.py syncdb
+
+server: syncdb
 	cd example_project; PYTHONPATH='..' python manage.py runserver
