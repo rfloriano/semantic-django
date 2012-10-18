@@ -10,6 +10,7 @@ from semantic.rdf import Virtuoso
 # Hack to encode stdout
 sys.stdout = codecs.getwriter('utf8')(sys.stdout)
 
+
 class Command(BaseCommand):
     help = "Introspects the database tables in the given database and outputs a Django model module."
 
