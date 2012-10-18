@@ -49,22 +49,21 @@ class CharField(SemanticField):
 
 class URLField(CharField):
 
-    def __init__(self, verify_exists=True, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         kwargs['max_length'] = kwargs.get('max_length', 200)
         CharField.__init__(self, *args, **kwargs)
 
-        self.set_validators(verify_exists)
+        self.set_validators(kwargs)
 
-    def set_validators(self, verify_exists):
+    def set_validators(self, kwargs):
+        verify_exists = kwargs.get('verify_exists', True)
         self.validators.append(validators.URLValidator(verify_exists=verify_exists))
 
 
 class URIField(URLField):
 
-    def __init__(self, verify_exists=False, *args, **kwargs):
-        super(URIField, self).__init__(verify_exists, *args, **kwargs)
-
-    def set_validators(self, verify_exists):
+    def set_validators(self, kwargs):
+        verify_exists = kwargs.get('verify_exists', False)
         self.validators.append(validators.URLValidator(verify_exists=verify_exists))
 
     def to_python(self, value):
