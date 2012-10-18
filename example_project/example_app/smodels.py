@@ -11,13 +11,14 @@ from semantic.rdf import models
 class BasePrograma(models.SemanticModel):
     label = models.CharField(graph='rdfs', max_length=200)
     foto_perfil = models.CharField(graph='base', max_length=200, blank=True)
-    id_do_programa_na_webmedia = models.IntegerField(graph='base', max_length=200)
+    id_do_programa_na_webmedia = models.IntegerField(graph='base')
     faz_parte_do_canal = models.URIField(graph='base')
     tem_edicao_do_programa = models.CharField(graph='base', max_length=200, blank=True)
 
     class Meta:
         # FIXME: Remove this abstract property
-        abstract = True
+        # abstract = True
+        managed = False
         graph = 'http://semantica.globo.com/'
         namespace = 'http://semantica.globo.com/base/Programa'
 

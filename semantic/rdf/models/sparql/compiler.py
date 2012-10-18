@@ -378,11 +378,11 @@ class SPARQLCompiler(object):
                 for table, col, order in self.find_ordering_name(field,
                         self.query.model._meta, default_order=asc):
                     if (table, col) not in processed_pairs:
-                        elt = '%s.%s' % (qn(table), qn2(col))
+                        elt = '%s' % (qn2(col))
                         processed_pairs.add((table, col))
                         if distinct and elt not in select_aliases:
                             ordering_aliases.append(elt)
-                        result.append('%s %s' % (elt, order))
+                        result.append('%s[%s]' % (order, elt))
                         group_by.append((elt, []))
             else:
                 elt = qn2(col)

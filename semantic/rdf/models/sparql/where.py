@@ -142,11 +142,8 @@ class WhereNode(tree.Node):
         recursion).
         """
 
-        if not self.children:
-            return None, []
         result = []
         result_params = []
-        empty = True
         for child in self.children:
             try:
                 if hasattr(child, 'as_sparql'):
@@ -159,26 +156,18 @@ class WhereNode(tree.Node):
                 if self.connector == AND and not self.negated:
                     # We can bail out early in this particular case (only).
                     raise
-                elif self.negated:
-                    empty = False
                 continue
             except FullResultSet:
                 if self.connector == OR:
                     if self.negated:
-                        empty = True
                         break
                     # We match everything. No need for any constraints.
                     return '', []
-                if self.negated:
-                    empty = True
                 continue
 
-            empty = False
             if sparql:
                 result.append(sparql)
                 result_params.extend(params)
-        if empty:
-            raise EmptyResultSet
 
         conn = ' %s ' % self.connector
         sparql_string = conn.join(result)
@@ -191,7 +180,10 @@ class WhereNode(tree.Node):
         default_params = []
         if fields:
             default_where, default_params = self.add_default_where(fields)
-            sparql_string = default_where + ' FILTER(' + sparql_string + ')'
+            if sparql_string:
+                sparql_string = default_where + ' FILTER(' + sparql_string + ')'
+            else:
+                sparql_string = default_where
 
         default_params.extend(result_params)
         return sparql_string, default_params
