@@ -778,7 +778,6 @@ class SPARQLCompiler(object):
                 return
 
         cursor = self.connection.cursor()
-        import pdb; pdb.set_trace()
         cursor.execute(sparql, params)
 
         if not result_type:
@@ -870,6 +869,7 @@ class SPARQLUpdateCompiler(SPARQLCompiler):
         """
         from django.db.models.base import Model
 
+        import pdb; pdb.set_trace()
         self.pre_sparql_setup()
         if not self.query.values:
             return '', ()

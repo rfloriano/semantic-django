@@ -201,3 +201,6 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         # an in-memory db.
         if self.settings_dict['NAME'] != ":memory:":
             BaseDatabaseWrapper.close(self)
+
+    def make_debug_cursor(self, cursor):
+        return util.CursorDebugWrapper(cursor, self)
