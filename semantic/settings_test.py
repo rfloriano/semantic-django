@@ -1,3 +1,4 @@
+# A fake settings to compatible tests with django
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',

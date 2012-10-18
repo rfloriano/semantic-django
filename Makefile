@@ -11,7 +11,7 @@ test-example-project:
 
 test-semantic-app:
 	@echo "Running semantic app tests"
-	@cd semantic; nosetests .
+	@cd semantic; DJANGO_SETTINGS_MODULE=semantic.settings_test nosetests .
 
 test: test-example-project test-semantic-app
 
