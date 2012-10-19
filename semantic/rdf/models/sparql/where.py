@@ -198,8 +198,6 @@ class WhereNode(tree.Node):
         recursion).
         """
 
-        import ipdb; ipdb.set_trace()
-
         result = []
         result_params = []
         for child in self.children:
@@ -208,7 +206,7 @@ class WhereNode(tree.Node):
                     sparql, params = child.as_sparql(qn=qn, connection=connection)
                 else:
                     # A leaf node in the tree.
-                    sparql, params = self.make_atom(child, qn, connection)
+                    sparql, params = self.make_atom_delete(child, qn, connection)
 
             except EmptyResultSet:
                 if self.connector == AND and not self.negated:
@@ -227,7 +225,8 @@ class WhereNode(tree.Node):
                 result.append(sparql)
                 result_params.extend(params)
 
-        return sparql_string, result_params
+        conn = ' %s ' % self.connector
+        return conn.join(result), result_params
 
     def make_atom(self, child, qn, connection):
         """
@@ -317,6 +316,38 @@ class WhereNode(tree.Node):
             return connection.ops.regex_lookup(lookup_type) % (field_sparql, cast_sparql), params
 
         raise TypeError('Invalid lookup_type: %r' % lookup_type)
+
+    def make_atom_delete(self, child, qn, connection):
+        """
+        Turn a tuple (table_alias, column_name, db_type, lookup_type,
+        value_annot, params) into valid SPARQL.
+
+        Returns the string for the SPARQL fragment and the parameters to use for
+        it.
+        """
+        lvalue, lookup_type, value_annot, params_or_value = child
+        if hasattr(lvalue, 'process'):
+            try:
+                lvalue, params = lvalue.process(lookup_type, params_or_value, connection)
+            except EmptyShortCircuit:
+                raise EmptyResultSet
+        else:
+            params = Field().get_db_prep_lookup(lookup_type, params_or_value,
+                connection=connection, prepared=True)
+
+        if isinstance(lvalue, tuple):
+            # A direct database column lookup.
+            field_sparql = self.sparql_for_columns(lvalue, qn, connection)
+        else:
+            # A smart object with an as_sparql() method.
+            field_sparql = lvalue.as_sparql(qn, connection)
+
+        if value_annot is datetime.datetime:
+            cast_sparql = connection.ops.datetime_cast_sparql()
+        else:
+            cast_sparql = '%s'
+
+        return '%s ?s ?p', params
 
     def sparql_for_columns(self, data, qn, connection):
         """
