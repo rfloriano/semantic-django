@@ -821,18 +821,23 @@ class SPARQLInsertCompiler(SPARQLCompiler):
     def as_sparql(self):
         # We don't need quote_name_unless_alias() here, since these are all
         # going to be column names (so we can avoid the extra overhead).
-        qn = self.connection.ops.quote_name
+        qn = self.connection.ops.quote_subject
+        qn2 = self.connection.ops.quote_predicate
+        # qn3 = self.connection.ops.quote_object
+        # qn2 = self.connection.ops.quote_name
         opts = self.query.model._meta
-        result = ['INSERT INTO %s' % qn(opts.db_table)]
-        result.append('(%s)' % ', '.join([qn(c) for c in self.query.columns]))
-        values = [self.placeholder(*v) for v in self.query.values]
-        result.append('VALUES (%s)' % ', '.join(values))
-        params = self.query.params
-        if self.return_id and self.connection.features.can_return_id_from_insert:
-            col = "%s.%s" % (qn(opts.db_table), qn(opts.pk.column))
-            r_fmt, r_params = self.connection.ops.return_insert_id()
-            result.append(r_fmt % col)
-            params = params + r_params
+        result = ['INSERT IN GRAPH %s' % qn(opts.graph)]
+
+        size = len(self.query.columns) - 1
+        predicates = []
+        for index, data in enumerate(zip(self.query.columns, self.query.values)):
+            predicate, data = data
+            field, value = data
+            predicates.append(qn2(field, predicate, index == size))
+
+        params = [value for field, value in self.query.values]
+
+        result.append('{ %s }' % (' '.join(predicates)))
         return ' '.join(result), params
 
     def execute_sparql(self, return_id=False):
@@ -869,11 +874,19 @@ class SPARQLUpdateCompiler(SPARQLCompiler):
         """
         from django.db.models.base import Model
 
-        import pdb; pdb.set_trace()
         self.pre_sparql_setup()
         if not self.query.values:
             return '', ()
-        table = self.query.tables[0]
+
+# MODIFY_QUERY = """
+# MODIFY GRAPH <%(graph)s>
+# DELETE { <%(uri)s> ?p ?o }
+# INSERT { <%(uri)s> ?p ?o }
+# WHERE { <%(uri)s> ?p ?o };
+# """
+
+# query = MODIFY_QUERY % {"uri": "x", "graph": "y"}
+
         qn = self.quote_name_unless_alias
         result = ['UPDATE %s' % qn(table)]
         result.append('SET')
