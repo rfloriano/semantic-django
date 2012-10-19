@@ -136,6 +136,7 @@ INSTALLED_APPS = (
     # 'django.contrib.admindocs',
     'semantic',
     'example_app',
+    'django_nose',
 )
 
 # A sample logging configuration. The only tangible logging
@@ -160,3 +161,5 @@ LOGGING = {
         },
     }
 }
+
+TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'

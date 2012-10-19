@@ -1,0 +1,4 @@
+<http://semantica.globo.com/base/Programa_OneProgram> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://semantica.globo.com/base/Programa> ;
+	<http://www.w3.org/2000/01/rdf-schema#label> "One Program" ;
+	<http://semantica.globo.com/base/faz_parte_do_canal> <http://semantica.globo.com/base/Canal_AChannel> ;
+	<http://semantica.globo.com/base/id_do_programa_na_webmedia> 123 .
