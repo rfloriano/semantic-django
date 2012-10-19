@@ -1,13 +1,13 @@
 
 clean:
 	@find . -name "*.pyc" -delete
+
 setup:
 	@pip install -r requirements.txt
 	#@sudo chmod 777 /usr/local/virtuoso-opensource/var/lib/virtuoso/db/
 
 test-example-project:
 	@echo "Running example project tests"
-	#@cd example_project; PYTHONPATH='..' VIRTUOSO_HOME=/usr/local/virtuoso-opensource  python manage.py test example_app --settings=example_project.settings_test
 	@cd example_project; PYTHONPATH='..' python manage.py test example_app --settings=example_project.settings_test
 	@echo "----------"
 	@echo
