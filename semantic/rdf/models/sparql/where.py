@@ -70,7 +70,6 @@ class WhereNode(tree.Node):
 
     #     return where_string, ''
 
-        # import ipdb; ipdb.set_trace()
         default = []
         optional = []
         result_params = []
@@ -101,7 +100,6 @@ class WhereNode(tree.Node):
         is stored unchanged and can be any class with an 'as_sparql()' method.
         """
         # (<django.db.models.sql.where.Constraint object at 0x10243c550>, 'exact', 'bla')
-        # import ipdb; ipdb.set_trace()
         if not isinstance(data, (list, tuple)):
             super(WhereNode, self).add(data, connector)
             return
@@ -196,7 +194,6 @@ class WhereNode(tree.Node):
         Returns the string for the SPARQL fragment and the parameters to use for
         it.
         """
-        # import ipdb; ipdb.set_trace()
         lvalue, lookup_type, value_annot, params_or_value = child
         if hasattr(lvalue, 'process'):
             try:
