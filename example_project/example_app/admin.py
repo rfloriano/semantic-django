@@ -4,6 +4,6 @@ from example_project.example_app.smodels import BasePrograma
 
 
 class BaseProgramaAdmin(admin.ModelAdmin):
-    readonly_fields = ['uri']
+    pass
 
 admin.site.register(BasePrograma, BaseProgramaAdmin)
