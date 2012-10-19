@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import subprocess
 import rdflib
@@ -64,10 +65,15 @@ def mocked_virtuoso_query(self):
 
 
 def _insert_from_in_test_query(query):
-    if query.find('WHERE') > -1:
+    graph = settings.TEST_SEMANTIC_GRAPH
+    if query.find('INSERT') > -1:
+        query = re.sub('GRAPH [^\s]+', 'GRAPH <%s>' % graph, query)
+    elif query.find('FROM') == -1 and query.find('WHERE') > -1:
         splited_query = query.split('WHERE')
-        splited_query.insert(1, 'FROM <%s> WHERE' % settings.TEST_SEMANTIC_GRAPH)
+        splited_query.insert(1, 'FROM <%s> WHERE' % graph)
         return ' '.join(splited_query)
+    else:
+        query = re.sub('FROM [^\s]+', 'FROM <%s>' % graph, query)
     return query
 
 

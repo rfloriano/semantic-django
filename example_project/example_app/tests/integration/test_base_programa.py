@@ -26,10 +26,28 @@ class TestBaseProgramaVirtuoso(SemanticTestCase):
     def test_object_creation_with_required_data(self):
         programa = BasePrograma.objects.create(
             uri='http://semantica.globo.com/base/Programa_OneProgram',
+            label="One Program",
             id_do_programa_na_webmedia="123",
             faz_parte_do_canal='http://semantica.globo.com/base/Canal_MeuCanal'
         )
         self.assertTrue(programa)
+
+    def test_object_delete(self):
+        programa = BasePrograma.objects.create(
+            uri='http://semantica.globo.com/base/Programa_AnotherProgram',
+            label="Another Program",
+            id_do_programa_na_webmedia="123",
+            faz_parte_do_canal='http://semantica.globo.com/base/Canal_MeuCanal'
+        )
+        programas = BasePrograma.objects.filter(
+            uri='http://semantica.globo.com/base/Programa_AnotherProgram'
+        )
+        self.assertEqual(len(programas), 1)
+        programa.delete()
+        programas = BasePrograma.objects.filter(
+            uri='http://semantica.globo.com/base/Programa_AnotherProgram'
+        )
+        self.assertEqual(len(programas), 0)
 
     def test_add_a_baseprograma_object_by_admin_and_need_find_in_admin_baseprograma_list(self):
         self.client.post('/admin/example_app/baseprograma/add/', {
