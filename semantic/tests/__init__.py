@@ -64,9 +64,11 @@ def mocked_virtuoso_query(self):
 
 
 def _insert_from_in_test_query(query):
-    splited_query = query.split('WHERE')
-    splited_query.insert(1, 'FROM <%s> WHERE' % settings.TEST_SEMANTIC_GRAPH)
-    return ' '.join(splited_query)
+    if query.find('WHERE') > -1:
+        splited_query = query.split('WHERE')
+        splited_query.insert(1, 'FROM <%s> WHERE' % settings.TEST_SEMANTIC_GRAPH)
+        return ' '.join(splited_query)
+    return query
 
 
 def mocked_convert(self):
