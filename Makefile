@@ -1,6 +1,7 @@
 
 clean:
 	@find . -name "*.pyc" -delete
+
 setup:
 	@pip install -r requirements.txt
 	#@sudo chmod 777 /usr/local/virtuoso-opensource/var/lib/virtuoso/db/
