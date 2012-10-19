@@ -22,7 +22,6 @@ allow_virtuoso_connection = False
 
 def mocked_query(self):
 
-    import pdb; pdb.set_trace()
     qres = graph.query(self.queryString)
 
     bindings_list = []
