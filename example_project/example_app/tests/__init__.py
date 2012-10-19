@@ -82,7 +82,6 @@ class TestBasePrograma(SemanticTestCase):
         programas = BasePrograma.objects.filter(label__icontains='ck in rio')
         self.assertEqual(len(programas), 1)
 
-
     def test_if_can_edit_a_baseprograma_objects_in_admin(self):
         response = self.client.get('/admin/example_app/baseprograma/http_3A_2F_2Fsemantica.globo.com_2Fbase_2FPrograma_5FRock_5Fin_5FRio/')
         self.assertEqual(response.status_code, 200)
