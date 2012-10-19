@@ -2,6 +2,7 @@ import sys
 import copy
 
 from django.db import transaction
+from django.db import router
 from django.db.models import signals
 from django.db.models.base import ModelBase, Model, subclass_exception
 from django.db.models.fields.related import OneToOneField
@@ -9,6 +10,7 @@ from django.db.models.loading import register_models, get_model
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, FieldError
 
 from semantic.rdf import connections
+from semantic.rdf.models.deletion import Collector
 from semantic.rdf.models.options import SemanticOptions
 from semantic.rdf.models.fields import AutoSemanticField
 from semantic.rdf.models.manager import SemanticManager
@@ -212,15 +214,15 @@ class SemanticModel(Model):
         abstract = True
 
     def save_base(self, raw=False, cls=None, origin=None, force_insert=False,
-            force_update=False, using='default'):
+            force_update=False, using=None):
         # this method is based on Model.save_base from django/db/models/base.py
         # changes:
         # (+) new line
         # (*) changed
         # (-) removed (commented)
 
-        # using = using or router.db_for_write(self.__class__, instance=self)  # (-)
-        connection = connections  #[using]  # (*)
+        using = using or router.db_for_write(self.__class__, instance=self)
+        connection = connections[using]  # (*)
 
         assert not (force_insert and force_update)
         if cls is None:
@@ -320,8 +322,15 @@ class SemanticModel(Model):
             signals.post_save.send(sender=origin, instance=self,
                 created=(not record_exists), raw=raw, using=using)
 
-
     save_base.alters_data = True
+
+    def delete(self, using=None):
+        using = using or router.db_for_write(self.__class__, instance=self)
+        assert self._get_pk_val() is not None, "%s object can't be deleted because its %s attribute is set to None." % (self._meta.object_name, self._meta.pk.attname)
+
+        collector = Collector(using=using)
+        collector.collect([self])
+        collector.delete()
 
     # def __init__(self, *args, **kwargs):
     #     # Set up the storage for instance state

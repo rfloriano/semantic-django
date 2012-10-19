@@ -26,24 +26,44 @@ class TestBaseProgramaVirtuoso(SemanticTestCase):
     def test_object_creation_with_required_data(self):
         programa = BasePrograma.objects.create(
             uri='http://semantica.globo.com/base/Programa_OneProgram',
+            label="One Program",
             id_do_programa_na_webmedia="123",
             faz_parte_do_canal='http://semantica.globo.com/base/Canal_MeuCanal'
         )
         self.assertTrue(programa)
 
+    def test_object_delete(self):
+        programa = BasePrograma.objects.create(
+            uri='http://semantica.globo.com/base/Programa_AnotherProgram',
+            label="Another Program",
+            id_do_programa_na_webmedia="123",
+            faz_parte_do_canal='http://semantica.globo.com/base/Canal_MeuCanal'
+        )
+        programas = BasePrograma.objects.filter(
+            uri='http://semantica.globo.com/base/Programa_AnotherProgram'
+        )
+        self.assertEqual(len(programas), 1)
+        programa.delete()
+        programas = BasePrograma.objects.filter(
+            uri='http://semantica.globo.com/base/Programa_AnotherProgram'
+        )
+        self.assertEqual(len(programas), 0)
+
     def test_add_a_baseprograma_object_by_admin_and_need_find_in_admin_baseprograma_list(self):
+        """Regression test"""
+
         self.client.post('/admin/example_app/baseprograma/add/', {
             'uri': 'http://semantica.globo.com/base/Programa_MyProgram',
             'label': 'My Program',
             'faz_parte_do_canal': 'http://semantica.globo.com/base/Canal_MyChannel',
-            'tem_edicao_do_programa': '123',
+            'id_do_programa_na_webmedia': '123',
             '_save': 'Save',
         })
         response = self.client.get('/admin/example_app/baseprograma/')
-        # FIXME: bug - A inserted programa not appeared in django admin list
         self.assertContains(response, 'http://semantica.globo.com/base/Programa_MyProgram')
 
     def test_object_creation_with_required_data_and_without_uri(self):
+        """Regression test"""
         program = BasePrograma.objects.create(
             id_do_programa_na_webmedia="123",
             faz_parte_do_canal='http://semantica.globo.com/base/Canal_MeuCanal'

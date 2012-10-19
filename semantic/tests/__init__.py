@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import subprocess
 import rdflib
@@ -13,8 +14,7 @@ ISQL = "isql"
 ISQL_CMD = 'echo "%s" | %s'
 ISQL_UP = "DB.DBA.TTLP_MT_LOCAL_FILE('%(ttl)s', '', '%(graph)s');"
 ISQL_DOWN = "SPARQL CLEAR GRAPH <%(graph)s>;"
-
-VIRTUOSO_DIR = os.path.join(os.environ['VIRTUOSO_HOME'], "var/lib/virtuoso/db/")
+ISQL_SERVER = "select server_root();"
 
 graph = rdflib.Graph()
 allow_virtuoso_connection = False
@@ -65,10 +65,15 @@ def mocked_virtuoso_query(self):
 
 
 def _insert_from_in_test_query(query):
-    if query.find('WHERE') > -1:
+    graph = settings.TEST_SEMANTIC_GRAPH
+    if query.find('INSERT') > -1:
+        query = re.sub('GRAPH [^\s]+', 'GRAPH <%s>' % graph, query)
+    elif query.find('FROM') == -1 and query.find('WHERE') > -1:
         splited_query = query.split('WHERE')
-        splited_query.insert(1, 'FROM <%s> WHERE' % settings.TEST_SEMANTIC_GRAPH)
+        splited_query.insert(1, 'FROM <%s> WHERE' % graph)
         return ' '.join(splited_query)
+    else:
+        query = re.sub('FROM [^\s]+', 'FROM <%s>' % graph, query)
     return query
 
 
@@ -82,18 +87,19 @@ def run_isql(cmd):
     stdout_value, stderr_value = process.communicate()
     if stderr_value:
         raise Exception(stderr_value)
+    return stdout_value
 
 
 def copy_ttl_to_virtuoso_dir(ttl):
+    virtuoso_dir = run_isql(ISQL_SERVER).split('\n\n')[-2]
     fixture_dir, fixture_file = os.path.split(ttl)
-    if not os.path.exists(VIRTUOSO_DIR):
-        os.makedirs(VIRTUOSO_DIR)
-    shutil.copyfile(ttl, os.path.join(VIRTUOSO_DIR, fixture_file))
+    shutil.copyfile(ttl, os.path.join(virtuoso_dir, fixture_file))
     return fixture_file
 
 
 def remove_ttl_from_virtuoso_dir(ttl):
-    ttl_path = os.path.join(VIRTUOSO_DIR, ttl)
+    virtuoso_dir = run_isql(ISQL_SERVER).split('\n\n')[-2]
+    ttl_path = os.path.join(virtuoso_dir, ttl)
     os.remove(ttl_path)
 
 

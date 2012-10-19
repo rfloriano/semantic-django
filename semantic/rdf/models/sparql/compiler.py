@@ -501,12 +501,9 @@ class SPARQLCompiler(object):
         graph = self.query.model._meta.graph
         from_ = []
 
-        if not getattr(settings, 'TESTING', False):
-            if isinstance(graph, list):
-                for g in graph:
-                    from_.append('%s' % self.wrap_graph(g))
-            else:
-                from_.append(self.wrap_graph(graph))
+        if isinstance(graph, list):
+            for g in graph:
+                from_.append('%s' % self.wrap_graph(g))
         return ' '.join(from_), []
 
     def get_grouping(self):
@@ -837,6 +834,10 @@ class SPARQLInsertCompiler(SPARQLCompiler):
 
         params = [value for field, value in self.query.values]
 
+        # force insert rdf:type
+        predicates += ['; rdf:type %s']
+        params += [qn(self.query.model._meta.namespace)]
+
         result.append('{ %s }' % (' '.join(predicates)))
         return ' '.join(result), params
 
@@ -857,12 +858,16 @@ class SPARQLDeleteCompiler(SPARQLCompiler):
         Creates the SPARQL for this query. Returns the SPARQL string and list of
         parameters.
         """
-        assert len(self.query.tables) == 1, \
-                "Can only delete from one table at a time."
-        qn = self.quote_name_unless_alias
-        result = ['DELETE FROM %s' % qn(self.query.tables[0])]
-        where, params = self.query.where.as_sparql(qn=qn, connection=self.connection)
-        result.append('WHERE %s' % where)
+        qn2 = self.connection.ops.quote_subject
+        result = ['DELETE FROM %s' % qn2(self.query.model._meta.graph)]
+
+        # DELETE FROM <http://semantica.globo.com/> {
+        #     ns1:Pessoa_ImportacaoEleicoes2012TSE_100000017695 ns1:naturalidade ns1:Cidade_Russas_CE
+        # }
+
+        where, params = self.query.where.as_delete_sparql(qn=qn2, connection=self.connection)
+        result.append('{ %s } WHERE { %s }' % (where, where))
+        params += params
         return ' '.join(result), tuple(params)
 
 
