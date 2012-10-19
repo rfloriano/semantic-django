@@ -61,9 +61,6 @@ class URIField(URLField):
         verify_exists = kwargs.get('verify_exists', False)
         super(URIField, self).__init__(verify_exists=verify_exists, *args, **kwargs)
 
-    def to_python(self, value):
-        return value
-
     def get_prep_value(self, value):
         if value:
             return '<%s>' % value
