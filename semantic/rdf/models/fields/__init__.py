@@ -30,10 +30,14 @@ class CharField(SemanticField):
         return "CharField"
 
     def get_prep_value(self, value):
+        if not value:
+            return ''
+
         if isinstance(value, basestring) or value is None:
             result = value
         else:
             result = smart_unicode(value)
+
         return '"%s"' % result
 
     def formfield(self, **kwargs):
