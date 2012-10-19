@@ -4,6 +4,8 @@ rdfextras==0.3
 isodate==0.4.8
 sparqlwrapper==1.5.2
 
+git+git://github.com/tatiana/SPARQL-Wrapper.git#egg=SPARQL-Wrapper
+
 # this could go in a separate requirements later on
 nose==1.2.1
 django_nose==1.1
