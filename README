@@ -1,9 +1,15 @@
-Semantic-Django is a project to create an OSM (object semantic mapper).
+Semantic-Django is a library for accessing RDF data from Python. It is based on Django models, so you can use the same methods you would use to query a relational database.
 
-Installation requirements are on file requirements.txt and can be installed using: pip install -r requirements.txt
+Installing:
 
-Currently being developed a Django backend compatible with Virtuoso.
+pip install -r requirements.txt
 
-Next steps: 
-  - Set of update SPARQL query when the object is saved
-  - Create semantic django compatibility with django forms and django admin
+Currently being developed a Django backend compatible with OpenLink Virtuoso triplestore.
+
+Features:
+
+- Integration with Django admin for CRUD operations
+- Save
+- Update
+- Delete
+- Aggregate functions (COUNT, AVG, MIN, MAX, SUM)
