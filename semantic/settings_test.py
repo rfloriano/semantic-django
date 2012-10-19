@@ -12,3 +12,5 @@ SEMANTIC_DATABASES = {
         'NAME': 'semantic.db',
     }
 }
+
+TEST_SEMANTIC_GRAPH = "http://testgraph.globo.com"

@@ -17,6 +17,7 @@ ISQL_DOWN = "SPARQL CLEAR GRAPH <%(graph)s>;"
 VIRTUOSO_DIR = os.path.join(os.environ['VIRTUOSO_HOME'], "var/lib/virtuoso/db/")
 
 graph = rdflib.Graph()
+allow_virtuoso_connection = False
 
 
 def mocked_query(self):
@@ -57,6 +58,17 @@ def mocked_query(self):
     return Wrapper.QueryResult(binding_str)
 
 
+def mocked_virtuoso_query(self):
+    self.queryString = _insert_from_in_test_query(self.queryString)
+    return Wrapper.QueryResult(self._query())
+
+
+def _insert_from_in_test_query(query):
+    splited_query = query.split('WHERE')
+    splited_query.insert(1, 'FROM <%s> WHERE' % settings.TEST_SEMANTIC_GRAPH)
+    return ' '.join(splited_query)
+
+
 def mocked_convert(self):
     return self.response
 
@@ -83,19 +95,31 @@ def remove_ttl_from_virtuoso_dir(ttl):
 
 
 class SemanticTestCase(TestCase):
+    originalSPARQLWrapper = Wrapper.SPARQLWrapper
+    originalQueryResult = Wrapper.QueryResult
+    originalQueryResultConver = Wrapper.QueryResult.convert
 
     allow_virtuoso_connection = False
-    graph = "http://testgraph.globo.com"
+    graph = settings.TEST_SEMANTIC_GRAPH
 
     def _setup_memory(self):
-        self.originalSPARQLWrapper = Wrapper.SPARQLWrapper
         Wrapper.SPARQLWrapper.query = mocked_query
-        self.originalQueryResult = Wrapper.QueryResult
         Wrapper.QueryResult.convert = mocked_convert
 
     def _teardown_memory(self):
         Wrapper.SPARQLWrapper = self.originalSPARQLWrapper
         Wrapper.QueryResult = self.originalQueryResult
+
+    def _setup_virtuoso(self):
+        # assert that the virtuoso wrapper is the original
+        self._teardown_virtuoso()
+
+        Wrapper.SPARQLWrapper.query = mocked_virtuoso_query
+
+    def _teardown_virtuoso(self):
+        Wrapper.SPARQLWrapper = self.originalSPARQLWrapper
+        Wrapper.QueryResult = self.originalQueryResult
+        Wrapper.QueryResult.convert = self.originalQueryResultConver
 
     def _upload_fixture_to_memory(self, fixture):
         graph.parse(fixture, format="n3")
@@ -110,18 +134,26 @@ class SemanticTestCase(TestCase):
         run_isql(isql_down)
 
     def _fixture_setup(self):
-        upload = self._upload_fixture_to_virtuoso
-        if not self.allow_virtuoso_connection:
+        global allow_virtuoso_connection
+        allow_virtuoso_connection = False
+
+        if self.allow_virtuoso_connection:
+            allow_virtuoso_connection = True
+            upload = self._upload_fixture_to_virtuoso
+            self._setup_virtuoso()
+        else:
             self._setup_memory()
             upload = self._upload_fixture_to_memory
+
         if hasattr(self, 'semantic_fixtures'):
             for fixture in self.semantic_fixtures:
                 upload(fixture)
         super(SemanticTestCase, self)._fixture_setup()
 
     def _fixture_teardown(self):
-        if not self.allow_virtuoso_connection:
-            self._teardown_memory()
-        else:
+        if self.allow_virtuoso_connection:
+            self._teardown_virtuoso()
             self._delete_fixture_from_virtuoso()
+        else:
+            self._teardown_memory()
         super(SemanticTestCase, self)._fixture_teardown()
