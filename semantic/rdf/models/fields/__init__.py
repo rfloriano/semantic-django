@@ -28,15 +28,12 @@ class CharField(SemanticField):
     def get_internal_type(self):
         return "CharField"
 
-    def to_python(self, value):
+    def get_prep_value(self, value):
         if isinstance(value, basestring) or value is None:
             result = value
         else:
             result = smart_unicode(value)
         return '"%s"' % result
-
-    def get_prep_value(self, value):
-        return self.to_python(value)
 
     def formfield(self, **kwargs):
         # Passing max_length to forms.CharField means that the value's length
@@ -60,7 +57,7 @@ class URLField(CharField):
 class URIField(URLField):
 
     def __init__(self, *args, **kwargs):
-        verify_exists = kwargs.get('verify_exists', False)  
+        verify_exists = kwargs.get('verify_exists', False)
         super(URIField, self).__init__(verify_exists=verify_exists, *args, **kwargs)
 
     def to_python(self, value):

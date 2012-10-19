@@ -1,9 +1,12 @@
+import re
+
 from django.db import utils
 from django.db.backends import *
 from django.db.backends.signals import connection_created
 from django.db.backends.sqlite3.client import DatabaseClient
 from django.db.backends.sqlite3.creation import DatabaseCreation
 from django.db.backends.sqlite3.introspection import DatabaseIntrospection
+from django.utils.encoding import smart_unicode
 
 from SPARQLWrapper import SPARQLWrapper as Database
 from SPARQLWrapper import JSON
@@ -78,6 +81,17 @@ class DatabaseOperations(BaseSemanticDatabaseOperations):
         #     return name  # Quoting once is enough.
         # return '"%s"' % name
         return '?%s' % name
+
+    def quote_subject(self, name):
+        return '<%s>' % name
+
+    def quote_predicate(self, field, predicate, is_last):
+        if field.primary_key:
+            return '%s'
+        if not is_last:
+            return '%s:%s %%s;' % (field.graph, predicate)
+        else:
+            return '%s:%s %%s' % (field.graph, predicate)
 
     def no_limit_value(self):
         return -1

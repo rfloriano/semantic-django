@@ -1,6 +1,7 @@
 import sys
 import copy
 
+from django.db import transaction
 from django.db.models import signals
 from django.db.models.base import ModelBase, Model, subclass_exception
 from django.db.models.fields.related import OneToOneField

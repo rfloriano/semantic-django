@@ -25,7 +25,7 @@ class SemanticQuerySet(QuerySet):
         query = self.query.clone(sparql.UpdateQuery)  # (*)
         query.add_update_fields(values)
         self._result_cache = None
-        return query.get_compiler(self.db).execute_sparql(None)  #(*)
+        return query.get_compiler(self.db).execute_sparql(None)  # (*)
     _update.alters_data = True
 
 
@@ -58,3 +58,15 @@ class RawSemanticQuerySet(RawQuerySet):
                 query=self.query.clone(using=alias),
                 params=self.params, translations=self.translations,
                 using=alias)
+
+
+def insert_query(model, values, return_id=False, raw_values=False, using=None):
+    """
+    Inserts a new record for the given model. This provides an interface to
+    the InsertQuery class and is how Model.save() is implemented. It is not
+    part of the public API.
+    """
+    query = sparql.InsertQuery(model)
+    query.insert_values(values, raw_values)
+    # TODO: use 'using' variable from parameters
+    return query.get_compiler(using='default').execute_sparql(return_id)
