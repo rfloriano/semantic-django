@@ -13,6 +13,11 @@ test-semantic-app:
 	@echo "Running semantic app tests"
 	@cd semantic; DJANGO_SETTINGS_MODULE=semantic.settings_test nosetests .
 
+test-pep8:
+	@pep8 example_project --ignore=E501,E126,E127,E128
+	@#pep8 semantic --ignore=E501,E126,E127,E128
+
+
 test: test-example-project test-semantic-app
 
 syncdb:

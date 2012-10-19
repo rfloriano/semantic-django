@@ -33,4 +33,3 @@ class URIFieldTestCase(unittest.TestCase):
         url = URLField(graph='base', verify_exists=True)
         url_validator = url.validators[1]
         self.assertTrue(url_validator.verify_exists)
-
