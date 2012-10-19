@@ -10,6 +10,6 @@ Features:
 
 - Integration with Django admin for CRUD operations
 - Save
-- Update
+- Update (Not yet)
 - Delete
 - Aggregate functions (COUNT, AVG, MIN, MAX, SUM)
