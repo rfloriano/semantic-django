@@ -112,13 +112,10 @@ class TestBasePrograma(SemanticTestCase):
 
 class TestBaseProgramaAccessingaVirtuoso(SemanticTestCase):
 
-    fixtures = ["example_app/fixtures/auth_user.json"]
-    semantic_fixtures = ["example_app/fixtures/fixture_aggregates.ttl"]
+    semantic_fixtures = ["example_app/fixtures/fixture.n3"]
 
     allow_virtuoso_connection = True
 
-    def test_if_can_list_baseprograma_objects_in_admin(self):
-        pass
-        #response = self.client.get('/admin/example_app/baseprograma/')
-        #self.assertEqual(response.status_code, 200)
-        #self.assertContains(response, 'http://semantica.globo.com/base/Programa_Rock_in_Rio')
+    def test_filter_from_uri_with_exact(self):
+        programas = BasePrograma.objects.filter(uri='http://semantica.globo.com/base/Programa_Rock_in_Rio')
+        self.assertEqual(len(programas), 1)
