@@ -13,8 +13,7 @@ ISQL = "isql"
 ISQL_CMD = 'echo "%s" | %s'
 ISQL_UP = "DB.DBA.TTLP_MT_LOCAL_FILE('%(ttl)s', '', '%(graph)s');"
 ISQL_DOWN = "SPARQL CLEAR GRAPH <%(graph)s>;"
-
-VIRTUOSO_DIR = os.path.join(os.environ['VIRTUOSO_HOME'], "var/lib/virtuoso/db/")
+ISQL_SERVER = "select server_root();"
 
 graph = rdflib.Graph()
 allow_virtuoso_connection = False
@@ -81,18 +80,21 @@ def run_isql(cmd):
     stdout_value, stderr_value = process.communicate()
     if stderr_value:
         raise Exception(stderr_value)
+    return stdout_value
 
 
 def copy_ttl_to_virtuoso_dir(ttl):
+    virtuoso_dir = run_isql(ISQL_SERVER)[-2]
     fixture_dir, fixture_file = os.path.split(ttl)
-    if not os.path.exists(VIRTUOSO_DIR):
-        os.makedirs(VIRTUOSO_DIR)
-    shutil.copyfile(ttl, os.path.join(VIRTUOSO_DIR, fixture_file))
+    if not os.path.exists(virtuoso_dir):
+        os.makedirs(virtuoso_dir)
+    shutil.copyfile(ttl, os.path.join(virtuoso_dir, fixture_file))
     return fixture_file
 
 
 def remove_ttl_from_virtuoso_dir(ttl):
-    ttl_path = os.path.join(VIRTUOSO_DIR, ttl)
+    virtuoso_dir = run_isql(ISQL_SERVER)[-2]
+    ttl_path = os.path.join(virtuoso_dir, ttl)
     os.remove(ttl_path)
 
 
