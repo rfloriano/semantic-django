@@ -25,14 +25,3 @@ class BasePrograma(models.SemanticModel):
     def __unicode__(self):
         return self.uri
 
-
-class Apresentador(models.SemanticModel):
-    name = models.CharField(graph='rdfs', max_length=200)
-    #programa = models.ForeignUri('BasePrograma', graph='base')
-
-    class Meta:
-        # FIXME: Remove this abstract property
-        # abstract = True
-        managed = False
-        graph = 'http://semantica.globo.com/'
-        namespace = 'http://semantica.globo.com/base/Apresentador'
