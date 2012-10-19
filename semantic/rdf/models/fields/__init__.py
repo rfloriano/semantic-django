@@ -1,5 +1,6 @@
 # from django.db import models
 import re
+import uuid
 
 from django.core import validators
 from django.utils.encoding import smart_unicode
@@ -64,7 +65,9 @@ class URIField(URLField):
         return value
 
     def get_prep_value(self, value):
-        return '<%s>' % value
+        if value:
+            return '<%s>' % value
+        return '"%s"' % value
 
     def get_db_prep_value(self, value, connection, prepared=False):
         """Returns field's value prepared for interacting with the database
@@ -84,6 +87,11 @@ class AutoSemanticField(URIField):
     def __init__(self, graph, verbose_name='URI', name=None, primary_key=True, verify_exists=False, **kwargs):
         super(AutoSemanticField, self).__init__(verbose_name, name, verify_exists, primary_key=primary_key, **kwargs)
         self.graph = graph
+
+    def get_prep_value(self, value):
+        if not value:
+            value = '%s/%s' % (self.model._meta.graph.rstrip('/'), uuid.uuid4())
+        return super(AutoSemanticField, self).get_prep_value(value)
 
 
 class IntegerField(IntegerField, SemanticField):
