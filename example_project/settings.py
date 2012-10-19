@@ -24,8 +24,8 @@ SEMANTIC_DATABASES = {
     'default': {
         'ENGINE': 'semantic.rdf.backends.virtuoso',
         'NAME': 'sparql',
-        # 'USER': '',
-        # 'PASSWORD': '',
+        'USER': 'dba',
+        'PASSWORD': 'dba',
         'HOST': 'localhost',
         'PORT': '8890',
         'PREFIX': {
