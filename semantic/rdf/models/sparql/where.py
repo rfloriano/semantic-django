@@ -188,6 +188,47 @@ class WhereNode(tree.Node):
         default_params.extend(result_params)
         return sparql_string, default_params
 
+    def as_delete_sparql(self, qn, connection, fields=None):
+        """
+        Returns the SPARQL version of the where clause and the value to be
+        substituted in. Returns None, None if this node is empty.
+
+        If 'node' is provided, that is the root of the SPARQL generation
+        (generally not needed except by the internal implementation for
+        recursion).
+        """
+
+        import ipdb; ipdb.set_trace()
+
+        result = []
+        result_params = []
+        for child in self.children:
+            try:
+                if hasattr(child, 'as_sparql'):
+                    sparql, params = child.as_sparql(qn=qn, connection=connection)
+                else:
+                    # A leaf node in the tree.
+                    sparql, params = self.make_atom(child, qn, connection)
+
+            except EmptyResultSet:
+                if self.connector == AND and not self.negated:
+                    # We can bail out early in this particular case (only).
+                    raise
+                continue
+            except FullResultSet:
+                if self.connector == OR:
+                    if self.negated:
+                        break
+                    # We match everything. No need for any constraints.
+                    return '', []
+                continue
+
+            if sparql:
+                result.append(sparql)
+                result_params.extend(params)
+
+        return sparql_string, result_params
+
     def make_atom(self, child, qn, connection):
         """
         Turn a tuple (table_alias, column_name, db_type, lookup_type,

@@ -857,12 +857,15 @@ class SPARQLDeleteCompiler(SPARQLCompiler):
         Creates the SPARQL for this query. Returns the SPARQL string and list of
         parameters.
         """
-        assert len(self.query.tables) == 1, \
-                "Can only delete from one table at a time."
         qn = self.quote_name_unless_alias
-        result = ['DELETE FROM %s' % qn(self.query.tables[0])]
-        where, params = self.query.where.as_sparql(qn=qn, connection=self.connection)
-        result.append('WHERE %s' % where)
+        qn2 = self.connection.ops.quote_subject
+        result = ['DELETE FROM %s' % qn2(self.query.model._meta.graph)]
+        # DELETE FROM <http://semantica.globo.com/> {
+        #     ns1:Pessoa_ImportacaoEleicoes2012TSE_100000017695 ns1:naturalidade ns1:Cidade_Russas_CE
+        # }
+
+        where, params = self.query.where.as_delete_sparql(qn=qn, connection=self.connection)
+        # result.append('WHERE %s' % where)
         return ' '.join(result), tuple(params)
 
 
