@@ -85,10 +85,13 @@ class AutoSemanticField(URIField):
         super(AutoSemanticField, self).__init__(verbose_name, name, verify_exists, primary_key=primary_key, **kwargs)
         self.graph = graph
 
-    def get_prep_value(self, value):
+    def pre_save(self, *args, **kargs):
+        model_data = args[0]
+        value = getattr(model_data, self.attname)
         if not value:
             value = '%s/%s' % (self.model._meta.graph.rstrip('/'), uuid.uuid4())
-        return super(AutoSemanticField, self).get_prep_value(value)
+            setattr(model_data, self.attname, value)
+        return super(AutoSemanticField, self).pre_save(*args, **kargs)
 
 
 class IntegerField(IntegerField, SemanticField):
