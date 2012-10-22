@@ -825,20 +825,30 @@ class SPARQLInsertCompiler(SPARQLCompiler):
         opts = self.query.model._meta
         result = ['INSERT IN GRAPH %s' % qn(opts.graph)]
 
-        size = len(self.query.columns) - 1
         predicates = []
+        params = []
+        uri = None
+
         for index, data in enumerate(zip(self.query.columns, self.query.values)):
             predicate, data = data
             field, value = data
-            predicates.append(qn2(field, predicate, index == size))
 
-        params = [value for field, value in self.query.values]
+            if field.primary_key:
+                uri = value
+                continue
+
+            if not value:
+                continue
+
+            predicates.append(qn2(field, predicate))
+            params.append(value)
 
         # force insert rdf:type
-        predicates += ['; rdf:type %s']
+        predicates[0] = "%s %s" % (uri, predicates[0])
+        predicates += [' rdf:type %s']
         params += [qn(self.query.model._meta.namespace)]
 
-        result.append('{ %s }' % (' '.join(predicates)))
+        result.append('{ %s }' % ('; '.join(predicates)))
         return ' '.join(result), params
 
     def execute_sparql(self, return_id=False):

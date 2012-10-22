@@ -74,3 +74,5 @@ class TestBasePrograma(SemanticTestCase):
     def test_get_from_label_with_filter_icontains(self):
         programas = BasePrograma.objects.filter(label__icontains='ck in rio')
         self.assertEqual(len(programas), 1)
+
+
