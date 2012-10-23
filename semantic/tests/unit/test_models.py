@@ -1,9 +1,26 @@
-import unittest
+from django.test import TestCase
 
-from semantic.rdf.models.fields import URLField, URIField
+from semantic.rdf.models.fields import CharField, URLField, URIField
 
 
-class URLFieldTestCase(unittest.TestCase):
+class CharFieldTestCase(TestCase):
+    def setUp(self):
+        self.char_field = CharField(graph='base')
+
+    def test_get_prepared_value_from_field(self):
+        value = self.char_field.get_prep_value("test")
+
+        self.assertEqual('"test"', value)
+
+    def test_empty_value_returns_empty_value_after_preparation(self):
+        """ regression test for issue #1 """
+
+        value = self.char_field.get_prep_value('')
+
+        self.assertEqual('', value)
+
+
+class URLFieldTestCase(TestCase):
     def setUp(self):
         self.url = URLField(graph='base')
 
@@ -23,7 +40,7 @@ class URLFieldTestCase(unittest.TestCase):
         self.assertFalse(url_validator.verify_exists)
 
 
-class URIFieldTestCase(unittest.TestCase):
+class URIFieldTestCase(TestCase):
     def test_uri_field_should_have_verify_exists_validator_false_by_default(self):
         uri = URIField(graph='base')
         uri_validator = uri.validators[1]

@@ -85,13 +85,8 @@ class DatabaseOperations(BaseSemanticDatabaseOperations):
     def quote_subject(self, name):
         return '<%s>' % name
 
-    def quote_predicate(self, field, predicate, is_last):
-        if field.primary_key:
-            return '%s'
-        if not is_last:
-            return '%s:%s %%s;' % (field.graph, predicate)
-        else:
-            return '%s:%s %%s' % (field.graph, predicate)
+    def quote_predicate(self, field, predicate):
+        return '%s:%s %%s' % (field.graph, predicate)
 
     def no_limit_value(self):
         return -1

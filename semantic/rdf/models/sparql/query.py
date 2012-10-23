@@ -319,10 +319,10 @@ class SparqlQuery(Query):
             return int(value[1])
         elif aggregate.is_computed:
             # Any computed aggregate (e.g., avg) returns a float
-            return float(value)
+            return float(value[1])
         else:
             # Return value depends on the type of the field being processed.
-            return self.convert_values(value, aggregate.field, connection)
+            return self.convert_values(value[1], aggregate.field, connection)
 
     def get_aggregation(self, using):
         """

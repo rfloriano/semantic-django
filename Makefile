@@ -14,7 +14,7 @@ test-example-project:
 
 test-semantic-app:
 	@echo "Running semantic app tests".
-	@cd semantic DJANGO_SETTINGS_MODULE=semantic.settings_test nosetests --verbosity=3 .
+	@cd semantic; DJANGO_SETTINGS_MODULE=semantic.settings_test nosetests --verbosity=3 -s .
 
 test-pep8:
 	@pep8 example_project --ignore=E501,E126,E127,E128

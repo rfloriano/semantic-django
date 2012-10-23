@@ -71,3 +71,14 @@ class TestBaseProgramaVirtuoso(SemanticTestCase):
         self.assertTrue(program)
         # FIXME: bug - A program is generated with UUID URI, however, program.uri is empty
         self.assertIn('semantica.globo.com', program.uri)
+
+    def test_dont_fill_empty_fields(self):
+        """ Regression test for issue #1 """
+        programa = BasePrograma.objects.create(
+            label='Lollapalloza',
+            id_do_programa_na_webmedia=1,
+            faz_parte_do_canal="http://semantica.globo.com/base/Canal_Test"
+        )
+
+        self.assertFalse(programa.foto_perfil)
+        self.assertFalse(programa.tem_edicao_do_programa)
