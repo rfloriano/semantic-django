@@ -49,6 +49,17 @@ class TestBaseProgramaVirtuoso(SemanticTestCase):
         )
         self.assertEqual(len(programas), 0)
 
+    def test_object_update(self):
+        programa = BasePrograma.objects.get(
+            uri='http://semantica.globo.com/base/Programa_OneProgram'
+        )
+        programa.label = "One ProgramB"
+        programa.save()
+        programa = BasePrograma.objects.get(
+            uri='http://semantica.globo.com/base/Programa_OneProgram'
+        )
+        self.assertEqual(programa.label, "One ProgramB")
+
     def test_add_a_baseprograma_object_by_admin_and_need_find_in_admin_baseprograma_list(self):
         """Regression test"""
 
@@ -69,7 +80,6 @@ class TestBaseProgramaVirtuoso(SemanticTestCase):
             faz_parte_do_canal='http://semantica.globo.com/base/Canal_MeuCanal'
         )
         self.assertTrue(program)
-        # FIXME: bug - A program is generated with UUID URI, however, program.uri is empty
         self.assertIn('semantica.globo.com', program.uri)
 
     def test_dont_fill_empty_fields(self):

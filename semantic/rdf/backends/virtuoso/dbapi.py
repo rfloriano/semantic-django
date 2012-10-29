@@ -6,6 +6,11 @@ import re
 import base64
 import decimal
 
+from SPARQLWrapper.Wrapper import SELECT, INSERT, DELETE, MODIFY
+# CONSTRUCT
+# ASK
+# DESCRIBE
+
 
 class Error(Exception):
     pass
@@ -34,6 +39,7 @@ class Cursor(object):
         self.results = None
         self.pointer = 0
         self.prefixes = prefixes
+        self.rowcount = -1
 
     def __iter__(self):
         result = self.pointer and self.results[self.pointer:] or self.results
@@ -88,6 +94,24 @@ class Cursor(object):
         self.sparql = sparql % params
         self.connection.setQuery(self.sparql)
         self.results = self.connection.query().convert()["results"]["bindings"]
+        self.update_rowcount()
+
+    def update_rowcount(self):
+        if self.connection.queryType == SELECT:
+            self.rowcount = len(self.results)
+        elif self.connection.queryType == INSERT \
+        or self.connection.queryType == DELETE:
+            message = self.results[0]['callret-0']['value']
+            finder = re.search('(?P<number>\d).*triples', message).groupdict()
+            self.rowcount = int(finder['number'])
+        elif self.connection.queryType == MODIFY:
+            message = self.results[0]['callret-0']['value']
+            finder = re.search('delete (?P<deleted>\d).*insert (?P<inserted>\d)', message).groupdict()
+            deleted = int(finder['deleted'])
+            inserted = int(finder['inserted'])
+            self.rowcount = deleted or inserted
+        else:
+            raise NotImplementedError("Type %s cannot get a rowcount" % self.connection.queryType)
 
     def executemany(self, operation, seq_of_parameters):
         raise NotImplementedError('executemany need to implemented')

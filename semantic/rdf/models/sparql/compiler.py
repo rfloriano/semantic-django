@@ -903,40 +903,57 @@ class SPARQLUpdateCompiler(SPARQLCompiler):
 # query = MODIFY_QUERY % {"uri": "x", "graph": "y"}
 
         qn = self.quote_name_unless_alias
-        result = ['UPDATE %s' % qn(table)]
-        result.append('SET')
-        values, update_params = [], []
+        qn2 = self.connection.ops.quote_predicate
+        qn3 = self.connection.ops.quote_subject
+        graph = self.query.model._meta.graph
+        result = ['MODIFY GRAPH %s' % qn3(graph)]
+        insert, insert_params = [], []
+        where, where_params = [], []
+        uri = self.query.where.as_sparql(qn=qn, connection=self.connection)[1][0]  # FIXME: remove this magic numbers
+
         for field, model, val in self.query.values:
             if hasattr(val, 'prepare_database_save'):
                 val = val.prepare_database_save(field)
             else:
                 val = field.get_db_prep_save(val, connection=self.connection)
 
-            # Getting the placeholder for the field.
-            if hasattr(field, 'get_placeholder'):
-                placeholder = field.get_placeholder(val, self.connection)
-            else:
-                placeholder = '%s'
+            if not val:
+                continue
+
+            # # Getting the placeholder for the field.
+            # if hasattr(field, 'get_placeholder'):
+            #     placeholder = field.get_placeholder(val, self.connection)
+            # else:
+            #     placeholder = '%s'
 
             if hasattr(val, 'evaluate'):
                 val = SPARQLEvaluator(val, self.query, allow_joins=False)
             name = field.column
             if hasattr(val, 'as_sparql'):
                 sparql, params = val.as_sparql(qn, self.connection)
-                values.append('%s = %s' % (qn(name), sparql))
-                update_params.extend(params)
+                insert.append('%s %s' % (qn(name), sparql))
+                insert_params.extend(params)
             elif val is not None:
-                values.append('%s = %s' % (qn(name), placeholder))
-                update_params.append(val)
+                # insert.append('%s %s' % (qn2(field, name), placeholder))
+                insert.append('%s' % qn2(field, name))
+                insert_params.append(val)
             else:
-                values.append('%s = NULL' % qn(name))
-        if not values:
+                insert.append('%s NULL' % qn(name))
+
+            predicate, where_value, insert_value = qn2(field, name), qn(name), val
+            where.append(predicate)
+            where_params.append(where_value)
+
+        insert[0] = "%s %s" % (uri, insert[0])
+        where[0] = "%s %s" % (uri, where[0])
+
+        if not insert:
             return '', ()
-        result.append(', '.join(values))
-        where, params = self.query.where.as_sparql(qn=qn, connection=self.connection)
-        if where:
-            result.append('WHERE %s' % where)
-        return ' '.join(result), tuple(update_params + params)
+        result.append('DELETE { %s }' % '; '.join(where))
+        result.append('INSERT { %s }' % '; '.join(insert))
+        result.append('WHERE { %s }' % '; '.join(where))
+
+        return ' '.join(result), tuple(where_params + insert_params + where_params)
 
     def execute_sparql(self, result_type):
         """
