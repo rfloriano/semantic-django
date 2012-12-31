@@ -18,7 +18,7 @@ setup(
     license="BSD",
     keywords="semantic django",
     url="http://github.com/rfloriano/semantic-django",
-    packages=["semantic"],
+    packages=["semantic", "semantic.management", "semantic.rdf"],
     long_description=read('README'),
     classifiers=[
         "Development Status :: 3 - Alpha",
