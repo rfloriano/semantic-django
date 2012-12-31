@@ -18,7 +18,7 @@ setup(
     license="BSD",
     keywords="semantic django",
     url="http://packages.python.org/an_example_pypi_project",
-    packages=["semantic-django"],
+    packages=["semantic"],
     long_description=read('README'),
     classifiers=[
         "Development Status :: 3 - Alpha",
