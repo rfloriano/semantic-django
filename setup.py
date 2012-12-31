@@ -17,7 +17,7 @@ setup(
     description=("Make semantic projects using Django and tiplestore databases"),
     license="BSD",
     keywords="semantic django",
-    url="http://packages.python.org/an_example_pypi_project",
+    url="http://github.com/rfloriano/semantic-django",
     packages=["semantic"],
     long_description=read('README'),
     classifiers=[
