@@ -1,5 +1,5 @@
 import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 # Utility function to read the README file.
@@ -18,7 +18,10 @@ setup(
     license="BSD",
     keywords="semantic django",
     url="http://github.com/rfloriano/semantic-django",
-    packages=["semantic", "semantic.management", "semantic.rdf"],
+    packages=find_packages(
+      'semantic',
+      ['tests.functional', 'tests.integration', 'tests.unit']
+    ),
     long_description=read('README'),
     classifiers=[
         "Development Status :: 3 - Alpha",
