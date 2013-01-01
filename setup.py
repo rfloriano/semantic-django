@@ -19,8 +19,7 @@ setup(
     keywords="semantic django",
     url="http://github.com/rfloriano/semantic-django",
     packages=find_packages(
-      'semantic',
-      ['tests.functional', 'tests.integration', 'tests.unit']
+      exclude=['example_project*', '*tests.functional', '*tests.integration', '*tests.unit']
     ),
     long_description=read('README'),
     classifiers=[
